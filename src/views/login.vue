@@ -33,8 +33,13 @@
           <div>忘记密码？</div>
         </div>
         <div class="login-btns">
-          <el-checkbox v-model="KeepInfo">记住</el-checkbox>
-          <input type="button" class="sub-btn" value="登录"/>
+          <el-checkbox v-model="KeepInfo" @change="picker">记住</el-checkbox>
+          <input
+            type="button"
+            class="sub-btn"
+            value="登录"
+            @click="loginConfirm"
+          />
         </div>
       </div>
     </div>
@@ -42,7 +47,9 @@
 </template>
 
 <script>
+// import api from '../api/index'
 export default {
+
   data() {
     return {
       loginForm: {
@@ -60,31 +67,60 @@ export default {
       },
     };
   },
+  created() {},
+  beforeMount() {
+    var str = localStorage.getItem('userInfo');
+    if (str) {
+     this.loginForm = JSON.parse(str);
+    }
+  },
+  mounted(){
+  },
+  methods: {
+    picker(e) {
+      this.KeepInfo = e;
+    },
+    loginConfirm() {
+      if (this.KeepInfo) {
+        localStorage.setItem("userInfo", JSON.stringify(this.loginForm));
+      }
+      this.$refs['loginForm'].validate((valid)=>{
+        if (valid) {
+          this.$router.push('/home')
+        }else{
+          alert('登录失败')
+        }
+      })
+    },
+  },
 };
 </script>
 
 <style>
-body {
+* {
   margin: 0;
   padding: 0;
 }
 html,
 body {
   height: 100%;
-  background-image: linear-gradient(#5068d1, #5272d8);
+  background:  #5272d8;
 }
 
 .login {
   width: 403px;
   height: 375px;
-  margin: 98px auto 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
 }
 
 .logo {
   width: 100%;
   color: #ffff;
   text-align: center;
-  margin: 16px 0;
+  margin: 0;
 }
 
 .login-info {
@@ -127,12 +163,11 @@ body {
   font-weight: bold;
   border-radius: 6px;
   cursor: pointer;
-  background-image: linear-gradient(#78BBF1,#5E9DE9);
+  background-image: linear-gradient(#78bbf1, #5e9de9);
 }
 
-.sub-btn:hover{
-  background-image: linear-gradient(#5E9DE9,#78BBF1);
-
+.sub-btn:hover {
+  background-image: linear-gradient(#5e9de9, #78bbf1);
 }
 
 /* element UI修改 */
