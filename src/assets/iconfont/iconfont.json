@@ -1,0 +1,23 @@
+{
+  "id": "2909641",
+  "name": "建行",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "10024906",
+      "name": "导出",
+      "font_class": "exportdaochu",
+      "unicode": "e72d",
+      "unicode_decimal": 59181
+    },
+    {
+      "icon_id": "20104473",
+      "name": "导入",
+      "font_class": "daoru",
+      "unicode": "e612",
+      "unicode_decimal": 58898
+    }
+  ]
+}

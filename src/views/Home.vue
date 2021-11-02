@@ -1,27 +1,28 @@
 <template>
-  <div class="home">
     <el-container class="home-aside">
       <el-aside width="200px">
         <nav-aside></nav-aside>
       </el-aside>
       <el-container>
-        <el-header>Header</el-header>
+        <el-header>
+          <sellheader></sellheader>
+        </el-header>
         <el-main>
           <router-view />
         </el-main>
       </el-container>
     </el-container>
-  </div>
 </template>
 
 <script>
 import navAside from "../components/navAside.vue";
+import sellheader from "../components/header.vue";
 export default {
   name: "Home",
   data() {
     return {};
   },
-  components: { navAside },
+  components: { navAside, sellheader },
 };
 </script>
 <style>
@@ -32,14 +33,14 @@ export default {
   height: 100%;
 }
 .el-header {
-  background-color: #b3c0d1;
+  background-color: #ffff;
   color: #333;
   text-align: center;
   line-height: 60px;
 }
 
 .el-aside {
-  background-color: #5068D1;
+  background-color: #5068d1;
   color: #fff;
   text-align: center;
 }
@@ -47,11 +48,14 @@ export default {
 .el-main {
   background-color: #e9eef3;
   color: #333;
-  text-align: center;
-  line-height: 160px;
+  padding: 10px !important;
 }
 
 body > .el-container {
   margin-bottom: 40px;
+}
+.el-breadcrumb__inner {
+  color: #94949A;
+  font-size: 12px;
 }
 </style>

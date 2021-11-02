@@ -8,7 +8,7 @@
       <div
         v-for="item in navList"
         :key="item.navIndex"
-        :class="pickItem == item.navIndex ? 'active' : 'item'"
+        :class="pickItem == item.navIndex ? 'actives' : 'item'"
         @click="changeNav(item.navIndex, item.path)"
       >
         {{ item.title }}
@@ -57,7 +57,15 @@ export default {
     };
   },
   components: {},
-  created() {},
+  beforeCreate(){
+  },
+  created() {
+    this.navList.forEach(item=>{
+      if (item.path == this.$route.path) {
+       this.pickItem = item.navIndex
+      }
+    })
+  },
   methods: {
     changeNav(e, path) {
       this.pickItem = e;
@@ -109,8 +117,9 @@ export default {
   font-size: 12px;
   letter-spacing: 1px;
   margin-bottom: 12px;
+  cursor: pointer;
 }
-.active {
+.actives {
   width: 80%;
   height: 40px;
   line-height: 40px;
@@ -119,5 +128,6 @@ export default {
   letter-spacing: 1px;
   margin-bottom: 12px;
   background-color: #4254a6;
+  cursor: pointer;
 }
 </style>
