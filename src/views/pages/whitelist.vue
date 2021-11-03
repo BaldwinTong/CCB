@@ -11,15 +11,16 @@
           :model="searchForm"
           label-width="80px"
           size="mini"
+          ref="searchForm"
         >
           <div class="search-item">
-            <el-form-item label="姓名：">
+            <el-form-item label="姓名：" prop="name">
               <el-input
                 v-model="searchForm.name"
                 placeholder="请输入"
               ></el-input>
             </el-form-item>
-            <el-form-item label="身份证号：">
+            <el-form-item label="身份证号：" prop="userID">
               <el-input
                 v-model="searchForm.userID"
                 placeholder="请输入"
@@ -27,13 +28,13 @@
             </el-form-item>
           </div>
           <div class="search-item">
-            <el-form-item label="性别：">
+            <el-form-item label="性别：" prop="gender">
               <el-select v-model="searchForm.gender" placeholder="请选择">
                 <el-option label="男" value="男"></el-option>
                 <el-option label="女" value="女"></el-option>
               </el-select>
             </el-form-item>
-            <el-form-item label="银行卡号：">
+            <el-form-item label="银行卡号：" prop="bankNumber">
               <el-input
                 v-model="searchForm.bankNumber"
                 placeholder="请输入"
@@ -41,7 +42,7 @@
             </el-form-item>
           </div>
           <div class="search-item">
-            <el-form-item label="年龄：">
+            <el-form-item label="年龄：" prop="age">
               <el-input
                 v-model="searchForm.age"
                 placeholder="请输入"
@@ -51,7 +52,9 @@
               <el-button type="primary" @click="search"
                 >搜索 <i class="el-icon-search"></i
               ></el-button>
-              <el-button @click="clearForm">清空</el-button>
+              <el-button @click="clearForm('searchForm')" type="info"
+                >清空</el-button
+              >
             </el-form-item>
           </div>
         </el-form>
@@ -60,24 +63,24 @@
     <div class="W-content">
       <div class="W-box">
         <div class="W-btns">
-          <div class="addData">
+          <div class="addData" @click="addData">
             <i class="el-icon-plus addIcon"></i>
             <span>添加数据</span>
           </div>
           <div class="handle-btns">
-            <div class="handle-item one">
+            <div class="handle-item one" @click="editData">
               <i class="el-icon-edit-outline"></i>
               <span class="title">修改</span>
             </div>
-            <div class="handle-item two">
+            <div class="handle-item two" @click="deleteData">
               <i class="el-icon-delete"></i>
               <span class="title">删除</span>
             </div>
-            <div class="handle-item thr">
+            <div class="handle-item thr" @click="outExe">
               <i class="iconfont icon-exportdaochu"></i>
               <span class="title">导出</span>
             </div>
-            <div class="handle-item thr">
+            <div class="handle-item thr" @click="inportFile">
               <i class="iconfont icon-daoru"></i>
               <span class="title">导入</span>
             </div>
@@ -90,6 +93,7 @@
             style="width: 100%"
             highlight-current-row
             size="small"
+            @selection-change="handleSelectionChange"
           >
             <el-table-column type="selection" width="55"> </el-table-column>
             <el-table-column prop="num" label="编号" align="center">
@@ -117,7 +121,7 @@
             <el-table-column label="操作" align="center">
               <template slot-scope="scope">
                 <el-button
-                  @click="handleClick(scope.row)"
+                  @click="handleDelete(scope.row)"
                   type="danger"
                   size="mini"
                   >删除</el-button
@@ -126,17 +130,37 @@
             </el-table-column>
           </el-table>
           <div class="pagination">
-            <el-pagination background layout="prev, pager, next" :total="100">
+            <el-pagination background layout="prev, pager, next" :total="this.tableData.length">
             </el-pagination>
           </div>
         </div>
       </div>
     </div>
+
+    <wadd
+      v-if="showAddDataDialog"
+      :isshowDialog="showAddDataDialog"
+      @addCloseDialog="addCloseDialog"
+    ></wadd>
+
+    <!-- 编辑弹窗 -->
+    <wed
+      v-if="showEidtDialog"
+      :isshowDialog="showEidtDialog"
+      :editData="pickeList"
+      @editCloseDialog="editCloseDialog"
+    ></wed>
   </div>
 </template>
 
 <script>
+import wadd from "./components/white/whiteAddDataDialog.vue";
+import wed from "./components/white/whiteEditDialog.vue";
 export default {
+  components: {
+    wadd,
+    wed,
+  },
   data() {
     return {
       searchForm: {
@@ -164,21 +188,151 @@ export default {
           bankNumber: "666XXXXXXXXXX4893",
         },
       ],
+
+      pickeList: [], //修改
+
+      //弹窗
+      showAddDataDialog: false,
+      showEidtDialog: false,
     };
   },
-  components: {},
   created() {
     this.getData();
   },
   methods: {
     search() {},
-    clearForm() {},
-    addData() {},
-    getData() {
-      // this.$http.get('http://test.com/api/detailData').then(res=>{
-      //   console.log(res);
-      // })
+    getData() {},
+    clearForm(formName) {
+      this.$refs[formName].resetFields();
     },
+    handleSelectionChange(val) {
+      this.pickeList = val;
+    },
+    addData() {
+      this.showAddDataDialog = true;
+    },
+    editData() {
+      if (this.pickeList.length == 1) {
+        this.showEidtDialog = true;
+      } else {
+        this.$mess("您还没有选中或选择了多个要修改的数据");
+        return false;
+      }
+    },
+    deleteData() {
+      if (this.pickeList.length < 1) {
+        this.$mess("您还没有选中要删除的数据");
+        return false;
+      } else {
+        let numId = [];
+        this.pickeList.forEach((item) => {
+          numId.push(item.num);
+        });
+        let data = this.tableData.filter((v) => !numId.includes(v.num));
+        this.tableData = data;
+      }
+    },
+
+    handleDelete(row) {
+      this.$confirm("此操作将删除此条数据, 是否继续?", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(() => {
+          this.tableData = this.tableData.filter((v) => v.num != row.num);
+          this.$mess({
+            message: "删除成功",
+            type: "success",
+          });
+        })
+        .catch(() => {
+          this.$mess("取消删除");
+        });
+    },
+
+    addCloseDialog(e) {
+      this.showAddDataDialog = e;
+    },
+
+    editCloseDialog(e, data) {
+      this.showEidtDialog = e;
+      if (data) {
+        console.log(data);
+        this.tableData.forEach((item) => {
+          if (data.num == item.num) {
+            item = data;
+          }
+        });
+      }
+    },
+    //导入
+    inportFile() {
+      this.$notify({
+        title: "功能开发中...",
+        type: 'warning'
+      });
+    },
+    // 导出
+    outExe() {
+      this.$notify({
+        title: "功能开发中...",
+        type: 'warning'
+      });
+      // this.$confirm("此操作将导出excel文件, 是否继续?", "提示", {
+      //   confirmButtonText: "确定",
+      //   cancelButtonText: "取消",
+      //   type: "warning",
+      // })
+      //   .then(() => {
+      //     this.excelData = this.tableData; //你要导出的数据list。
+      //     this.export2Excel();
+      //   })
+      //   .catch(() => {});
+    },
+    /*
+    export2Excel() {
+      var that = this;
+      require.ensure([], () => {
+        const { export_json_to_excel } = require("../../excel/Export2Excel"); //这里必须使用绝对路径
+        const tHeader = [
+          "id",
+          "withNum",
+          "userId",
+          "name",
+          "amount",
+          "status",
+          "amountIn",
+          "amountSuccess",
+          "createTime",
+        ]; // 导出的表头名
+        const filterVal = [
+          "id",
+          "withNum",
+          "userId",
+          "name",
+          "amount",
+          "status",
+          "amountIn",
+          "amountSuccess",
+          "createTime",
+        ]; // 导出的表头字段名
+        const list = that.excelData;
+        const data = that.formatJson(filterVal, list);
+        let time1,
+          time2 = "";
+        if (this.start !== "") {
+          time1 = that.moment(that.start).format("YYYY-MM-DD");
+        }
+        if (this.end !== "") {
+          time2 = that.moment(that.end).format("YYYY-MM-DD");
+        }
+        export_json_to_excel(tHeader, data, `[${time1}-${time2}]提现管理excel`); // 导出的表格名称，根据需要自己命名
+      });
+    },
+    formatJson(filterVal, jsonData) {
+      return jsonData.map((v) => filterVal.map((j) => v[j]));
+    },*/
   },
   computed: {},
 };
@@ -239,7 +393,7 @@ export default {
   text-align: center;
   font-weight: 800;
 }
-.addIcon{
+.addIcon {
   font-weight: 900 !important;
   margin-right: 4px;
 }
@@ -261,6 +415,8 @@ export default {
 
 .W-content .handle-btns .handle-item {
   cursor: pointer;
+  display: flex;
+  align-items: center;
 }
 .W-content .handle-btns .one:hover,
 .W-content .handle-btns .two:hover,
@@ -282,7 +438,7 @@ export default {
   color: #262626;
   font-weight: 700;
 }
-.pagination{
+.pagination {
   width: 100%;
   margin-top: 16px;
   display: flex;
