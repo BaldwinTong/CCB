@@ -10,10 +10,11 @@
           class="form"
           :model="searchForm"
           label-width="80px"
+          ref="searchForm"
           size="mini"
         >
           <div class="search-item">
-            <el-form-item label="所属类别：">
+            <el-form-item label="所属类别：" prop="BelongType">
               <el-select v-model="searchForm.BelongType" placeholder="请选择">
                 <el-option
                   v-for="item in belongList"
@@ -24,7 +25,7 @@
                 </el-option>
               </el-select>
             </el-form-item>
-            <el-form-item label="最高价格：">
+            <el-form-item label="最高价格：" prop="hightPrice">
               <el-input
                 class="padd-right"
                 v-model="searchForm.hightPrice"
@@ -34,13 +35,13 @@
             </el-form-item>
           </div>
           <div class="search-item">
-            <el-form-item label="产品名称：">
+            <el-form-item label="产品名称：" prop="productName">
               <el-input
                 v-model="searchForm.productName"
                 placeholder="请输入"
               ></el-input>
             </el-form-item>
-            <el-form-item label="年交易量：">
+            <el-form-item label="年交易量：" prop="yearValue">
               <el-input
                 class="padd-right"
                 v-model="searchForm.yearValue"
@@ -50,7 +51,7 @@
             </el-form-item>
           </div>
           <div class="search-item">
-            <el-form-item label="最低价格：">
+            <el-form-item label="最低价格：" prop="bottomPrice">
               <el-input
                 class="padd-right"
                 v-model="searchForm.bottomPrice"
@@ -62,7 +63,9 @@
               <el-button class="check-btn" @click="search"
                 >查询 <i class="el-icon-search"></i
               ></el-button>
-              <el-button @click="clearForm" type="info">清空</el-button>
+              <el-button @click="clearForm('searchForm')" type="info"
+                >清空</el-button
+              >
             </el-form-item>
           </div>
         </el-form>
@@ -71,12 +74,12 @@
     <div class="W-content">
       <div class="W-box">
         <div class="W-btns">
-          <div class="addData">
+          <div class="addData" @click="addData">
             <i class="el-icon-plus addIcon"></i>
             <span>添加数据</span>
           </div>
           <div class="handle-btns">
-            <div class="handle-item one">
+            <div class="handle-item one" @click="editData">
               <i class="el-icon-edit-outline"></i>
               <span class="title">修改</span>
             </div>
@@ -101,18 +104,23 @@
             style="width: 100%"
             highlight-current-row
             size="small"
+            @selection-change="handleSelectionChange"
           >
             <el-table-column type="selection" width="55"> </el-table-column>
             <el-table-column prop="num" label="编号" align="center">
             </el-table-column>
-            <el-table-column prop="type" label="所属类别" align="center">
+            <el-table-column prop="category" label="所属类别" align="center">
             </el-table-column>
             <el-table-column prop="productName" label="产品名称" align="center">
             </el-table-column>
-            <el-table-column prop="bottomPrice" label="最低价格(元/斤)" align="center">
+            <el-table-column
+              prop="bottomPrice"
+              label="最低价格(元/斤)"
+              align="center"
+            >
             </el-table-column>
             <el-table-column
-              prop="hightPrice"
+              prop="highestPrice"
               label="最高价格(元/斤)"
               width="180px"
               align="center"
@@ -137,16 +145,35 @@
             </el-table-column>
           </el-table>
           <div class="pagination">
-            <el-pagination background layout="prev, pager, next" :total="100">
+            <el-pagination
+              background
+              layout="prev, pager, next"
+              :total="tableData.length"
+            >
             </el-pagination>
           </div>
         </div>
       </div>
     </div>
+
+    <farm-add
+      v-if="isshowAddvisible"
+      :isshow="isshowAddvisible"
+      @addcloseDialog="addcloseDialog"
+    ></farm-add>
+
+    <farm-edit
+      v-if="isshowEditvisible"
+      :editData="pickeList"
+      :isshow="isshowEditvisible"
+      @editcloseDialog="editcloseDialog"
+    ></farm-edit>
   </div>
 </template>
 
 <script>
+import farmAdd from "./components/farm/farmAddDialog.vue";
+import farmEdit from "./components/farm/farmEditDialog.vue";
 export default {
   data() {
     return {
@@ -160,20 +187,20 @@ export default {
       tableData: [
         {
           num: "0001",
-          type:"蔬菜类",
+          category: "蔬菜类",
           productName: "小白菜",
-          bottomPrice:"1.40",
-          hightPrice:"4.60",
-          yearValue:"200.62",
+          bottomPrice: "1.40",
+          highestPrice: "4.60",
+          yearValue: "200.62",
         },
         {
           num: "0002",
-          type:"蔬菜类",
+          category: "蔬菜类",
           productName: "西蓝花",
-          bottomPrice:"3.50",
-          hightPrice:"5.50",
-          yearValue:"400.62",
-        }
+          bottomPrice: "3.50",
+          highestPrice: "5.50",
+          yearValue: "400.62",
+        },
       ],
       belongList: [
         {
@@ -193,17 +220,49 @@ export default {
           label: "家禽类",
         },
       ],
+      pickeList: [], //修改
+      isshowAddvisible: false,
+      isshowEditvisible: false,
     };
   },
-  components: {},
+  components: {
+    farmAdd,
+    farmEdit,
+  },
   created() {
     this.getData();
   },
   methods: {
     search() {},
-    clearForm() {},
-    addData() {},
+    clearForm(formName) {
+      this.$refs[formName].resetFields();
+    },
+    handleSelectionChange(val) {
+      this.pickeList = val;
+    },
+    addData() {
+      this.isshowAddvisible = true;
+    },
+    editData() {
+      if (this.pickeList.length == 1) {
+        this.isshowEditvisible = true;
+      } else {
+        this.$mess("您还没有选中或选择了多个要修改的数据");
+        return false;
+      }
+    },
     getData() {},
+    addcloseDialog(e, data) {
+      this.isshowAddvisible = e;
+      if (data) {
+        data.num = "000" + (this.tableData.length + 1);
+        this.tableData.push(data);
+      }
+    },
+    editcloseDialog(e, data) {
+      this.isshowEditvisible = e;
+      console.log(data);
+    },
   },
   computed: {},
 };
@@ -339,7 +398,7 @@ export default {
   right: 0px;
 }
 
-.padd-right .el-input__inner{
+.padd-right .el-input__inner {
   padding-right: 56px !important;
   box-sizing: border-box;
 }
