@@ -121,9 +121,9 @@ export default {
   padding: 30px;
   box-sizing: border-box;
 }
-.user-box .input-width{
+/* .user-box .input-width{
   width: 300px;
-}
+} */
 
 .user-btns{
   width: 100%;

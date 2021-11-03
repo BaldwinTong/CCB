@@ -10,8 +10,8 @@ import username from '../views/pages/username.vue'
 
 Vue.use(VueRouter)
 const originalPush = VueRouter.prototype.push
-   VueRouter.prototype.push = function push(location) {
-   return originalPush.call(this, location).catch(err => err)
+VueRouter.prototype.push = function push(location) {
+    return originalPush.call(this, location).catch(err => err)
 }
 const routerList = [];
 
@@ -26,6 +26,7 @@ const routes = [...routerList, {
 }, {
     path: '/Home',
     name: 'Home',
+    redirect: "whiteList",
     component: Home,
     children: [{
         path: '/whiteList',

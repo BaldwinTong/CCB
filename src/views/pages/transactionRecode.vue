@@ -228,6 +228,7 @@ export default {
   background-color: #fff;
   border-radius: 4px;
   margin-bottom: 18px;
+  box-shadow: 2px 3px 7px 2px #cccc;
 }
 
 .T-content .cont-item .item-top {
@@ -284,6 +285,7 @@ export default {
   justify-content: flex-start;
   box-sizing: border-box;
   margin-top: 20px;
+  
 }
 .item-info .info-item .line {
   width: 6px;

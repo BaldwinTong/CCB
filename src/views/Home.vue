@@ -58,4 +58,8 @@ body > .el-container {
   color: #94949A;
   font-size: 12px;
 }
+
+.el-input__inner{
+  width: 220px !important;
+}
 </style>

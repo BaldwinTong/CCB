@@ -220,7 +220,7 @@ export default {
   width: 100%;
   margin-top: 20px;
   background-color: #fff;
-  padding-top: 22px;
+  padding: 22px 12px 0;
   box-sizing: border-box;
   box-shadow: 2px 3px 7px 2px #cccc;
   border-radius: 2px;
@@ -230,10 +230,10 @@ export default {
   justify-content: space-around;
   align-items: center;
 }
-
+/* 
 .search-item{
   width: 28%;
-}
+} */
 
 .el-form-item__label {
   font-size: 12px !important;
@@ -335,16 +335,12 @@ export default {
   border-top-right-radius: 4px;
   border-bottom-right-radius: 4px;
   position: absolute;
-  top: 1px;
+  top: 0px;
   right: 0px;
 }
 
-.padd-right {
-  padding-right: 50px;
+.padd-right .el-input__inner{
+  padding-right: 56px !important;
   box-sizing: border-box;
-}
-.padd-right .el-input__inner {
-  border-top-right-radius: 0px !important;
-  border-bottom-right-radius: 0px !important ;
 }
 </style>
