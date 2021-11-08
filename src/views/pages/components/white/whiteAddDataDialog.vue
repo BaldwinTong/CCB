@@ -78,7 +78,7 @@ export default {
     onConfirm(formName) {
       this.$refs[formName].validate((valid) => {
         if (valid) {
-          alert("submit!");
+          this.$emit("addCloseDialog", false, this.dialogForm);
         } else {
           console.log("error submit!!");
           return false;
