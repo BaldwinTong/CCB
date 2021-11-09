@@ -83,17 +83,29 @@
               <i class="el-icon-edit-outline"></i>
               <span class="title">修改</span>
             </div>
-            <div class="handle-item two">
+            <div class="handle-item two" @click="deleteData">
               <i class="el-icon-delete"></i>
               <span class="title">删除</span>
             </div>
-            <div class="handle-item thr">
+            <div class="handle-item thr" @click="outExe">
               <i class="iconfont icon-exportdaochu"></i>
               <span class="title">导出</span>
             </div>
             <div class="handle-item thr">
               <i class="iconfont icon-daoru"></i>
-              <span class="title">导入</span>
+              <el-upload
+                class="upload-demo"
+                :show-file-list="false"
+                action=""
+                :on-change="handleChange"
+                :on-remove="handleRemove"
+                :on-exceed="handleExceed"
+                :limit="limitUpload"
+                accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                :auto-upload="false"
+              >
+                <span class="title">导入</span>
+              </el-upload>
             </div>
           </div>
         </div>
@@ -174,6 +186,7 @@
 <script>
 import farmAdd from "./components/farm/farmAddDialog.vue";
 import farmEdit from "./components/farm/farmEditDialog.vue";
+import export2Excel from "../../utils/exportfile.js";
 export default {
   data() {
     return {
@@ -220,6 +233,8 @@ export default {
           label: "家禽类",
         },
       ],
+      limitUpload: 1,
+      fileTemp: null,
       pickeList: [], //修改
       isshowAddvisible: false,
       isshowEditvisible: false,
@@ -233,6 +248,7 @@ export default {
     this.getData();
   },
   methods: {
+    getData() {},
     search() {},
     clearForm(formName) {
       this.$refs[formName].resetFields();
@@ -251,7 +267,21 @@ export default {
         return false;
       }
     },
-    getData() {},
+
+    deleteData() {
+      if (this.pickeList.length < 1) {
+        this.$mess("您还没有选中要删除的数据");
+        return false;
+      } else {
+        let numId = [];
+        this.pickeList.forEach((item) => {
+          numId.push(item.num);
+        });
+        let data = this.tableData.filter((v) => !numId.includes(v.num));
+        this.tableData = data;
+      }
+    },
+
     addcloseDialog(e, data) {
       this.isshowAddvisible = e;
       if (data) {
@@ -263,12 +293,123 @@ export default {
       this.isshowEditvisible = e;
       console.log(data);
     },
+
+    // 导出
+    outExe() {
+      this.$confirm("此操作将导出excel文件, 是否继续?", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(() => {
+          const tHeader = [
+            "编号",
+            "所属类型",
+            "产品名称",
+            "最低价格",
+            "最高价格",
+            "年交易量",
+          ]; // 导出的表头名
+          const filterVal = [
+            "num",
+            "category",
+            "productName",
+            "bottomPrice",
+            "highestPrice",
+            "yearValue",
+          ]; // 导出的表头字段名
+          export2Excel(this.tableData, tHeader, filterVal, "农产品");
+        })
+        .catch(() => {
+          console.log("导出失败");
+        });
+    },
+    handleChange(file) {
+      this.fileTemp = file.raw;
+      if (this.fileTemp) {
+        if (
+          this.fileTemp.type ==
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+          this.fileTemp.type == "application/vnd.ms-excel"
+        ) {
+          this.importfxx(this.fileTemp);
+          this.$mess({
+            type: "success",
+            message: "上传成功",
+          });
+        } else {
+          this.$message({
+            type: "warning",
+            message: "附件格式错误，请删除后重新上传！",
+          });
+        }
+      } else {
+        this.$message({
+          type: "warning",
+          message: "请上传附件！",
+        });
+      }
+    },
+    handleExceed() {
+      this.$message({
+        type: "warning",
+        message: "超出最大上传文件数量的限制！",
+      });
+      return;
+    },
+    handleRemove() {
+      this.fileTemp = null;
+    },
+    importfxx(event) {
+      console.log(event, "-----------");
+      let that = this;
+      var reader = new FileReader();
+      var XLSX = require("xlsx");
+      reader.onload = function (e) {
+        var data = e.target.result;
+        console.log(data);
+        var wb = XLSX.read(data, {
+          type: "buffer",
+        });
+        var outdata = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+        console.log(outdata);
+        outdata.map((v) => {
+          let obj = {};
+          obj.num = v["编号"];
+          obj.category = v["所属类型"];
+          obj.productName = v["产品名称"];
+          obj.bottomPrice = v["最低价格"];
+          obj.highestPrice = v["最高价格"];
+          obj.yearValue = v["年交易量"];
+          that.tableData.push(obj);
+        });
+      };
+      reader.readAsArrayBuffer(event);
+    },
+
+    handleClick(row) {
+      this.$confirm("此操作将删除此条数据, 是否继续?", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(() => {
+          this.tableData = this.tableData.filter((v) => v.num != row.num);
+          this.$mess({
+            message: "删除成功",
+            type: "success",
+          });
+        })
+        .catch(() => {
+          this.$mess("取消删除");
+        });
+    },
   },
   computed: {},
 };
 </script>
 
-<style>
+<style scoped>
 .search,
 .W-content {
   width: 100%;

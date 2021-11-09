@@ -80,9 +80,21 @@
               <i class="iconfont icon-exportdaochu"></i>
               <span class="title">导出</span>
             </div>
-            <div class="handle-item thr" @click="inportFile">
+            <div class="handle-item thr">
               <i class="iconfont icon-daoru"></i>
-              <span class="title">导入</span>
+              <el-upload
+                class="upload-demo"
+                :show-file-list="false"
+                action=""
+                :on-change="handleChange"
+                :on-remove="handleRemove"
+                :on-exceed="handleExceed"
+                :limit="limitUpload"
+                accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                :auto-upload="false"
+              >
+                <span class="title">导入</span>
+              </el-upload>
             </div>
           </div>
         </div>
@@ -162,6 +174,7 @@
 import Mock from "mockjs";
 import wadd from "./components/white/whiteAddDataDialog.vue";
 import wed from "./components/white/whiteEditDialog.vue";
+import export2Excel from "../../utils/exportfile.js";
 export default {
   components: {
     wadd,
@@ -200,6 +213,10 @@ export default {
       //弹窗
       showAddDataDialog: false,
       showEidtDialog: false,
+
+      //导入
+      limitUpload: 1,
+      fileTemp: null,
     };
   },
   created() {
@@ -279,129 +296,99 @@ export default {
         });
       }
     },
-    //导入
-    inportFile() {
-      this.$notify({
-        title: "功能开发中...",
-        type: "warning",
-      });
 
-      // let _this = this;
-      // let inputDOM = this.$refs.inputer;
-      // // 通过DOM取文件数据
-      // this.file = event.currentTarget.files[0];
-      // var rABS = false; //是否将文件读取为二进制字符串
-      // var f = this.file;
-      // var reader = new FileReader();
-      // //if (!FileReader.prototype.readAsBinaryString) {
-      // FileReader.prototype.readAsBinaryString = function (f) {
-      //   var binary = "";
-      //   var rABS = false; //是否将文件读取为二进制字符串
-      //   var pt = this;
-      //   var wb; //读取完成的数据
-      //   var outdata;
-      //   var reader = new FileReader();
-      //   reader.onload = function (e) {
-      //     var bytes = new Uint8Array(reader.result);
-      //     var length = bytes.byteLength;
-      //     for (var i = 0; i < length; i++) {
-      //       binary += String.fromCharCode(bytes[i]);
-      //     }
-      //     var XLSX = require("xlsx");
-      //     if (rABS) {
-      //       wb = XLSX.read(btoa(fixdata(binary)), {
-      //         //手动转化
-      //         type: "base64",
-      //       });
-      //     } else {
-      //       wb = XLSX.read(binary, {
-      //         type: "binary",
-      //       });
-      //     }
-      //     outdata = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]); //outdata就是你想要的东西
-      //     this.da = [...outdata];
-      //     let arr = [];
-      //     this.da.map((v) => {
-      //       let obj = {};
-      //       obj.id = v.id;
-      //       obj.status = v.status;
-      //       arr.push(obj);
-      //     });
-      //     console.log(arr);
-      //     let para = {
-      //       //withList: JSON.stringify(this.da)
-      //       withList: arr,
-      //     };
-      //     _this.$message({
-      //       message: "请耐心等待导入成功",
-      //       type: "success",
-      //     });
-      //     withImport(para).then((res) => {
-      //       window.location.reload();
-      //     });
-      //   };
-      //   reader.readAsArrayBuffer(f);
-      // };
-      // if (rABS) {
-      //   reader.readAsArrayBuffer(f);
-      // } else {
-      //   reader.readAsBinaryString(f);
-      // }
-    },
     // 导出
     outExe() {
-      this.$notify({
-        title: "功能开发中...",
-        type: "warning",
-      });
       this.$confirm("此操作将导出excel文件, 是否继续?", "提示", {
         confirmButtonText: "确定",
         cancelButtonText: "取消",
         type: "warning",
       })
         .then(() => {
-          this.excelData = this.tableData; //你要导出的数据list。
-          this.export2Excel();
+          const tHeader = [
+            "编号",
+            "姓名",
+            "性别",
+            "年龄",
+            "身份证号",
+            "银行卡号",
+          ]; // 导出的表头名
+          const filterVal = [
+            "num",
+            "name",
+            "gender",
+            "age",
+            "userID",
+            "bankNumber",
+          ]; // 导出的表头字段名
+          export2Excel(this.tableData, tHeader, filterVal, "白名单");
         })
-        .catch(() => {});
+        .catch(() => {
+          console.log("导出失败");
+        });
     },
 
-    export2Excel() {
-      var that = this;
-      require.ensure([], () => {
-        const { export_json_to_excel } = require("../../excel/Export2Excel"); //这里必须使用绝对路径
-        const tHeader = [
-          "num",
-          "name",
-          "gender",
-          "age",
-          "userID",
-          "bankNumber",
-        ]; // 导出的表头名
-        const filterVal = [
-          "num",
-          "name",
-          "gender",
-          "age",
-          "userID",
-          "bankNumber",
-        ]; // 导出的表头字段名
-        const list = that.excelData;
-        const data = that.formatJson(filterVal, list);
-        // let time1,
-        //   time2 = "";
-        // if (this.start !== "") {
-        //   time1 = that.moment(that.start).format("YYYY-MM-DD");
-        // }
-        // if (this.end !== "") {
-        //   time2 = that.moment(that.end).format("YYYY-MM-DD");
-        // }
-        // export_json_to_excel(tHeader, data, `[${time1}-${time2}]提现管理excel`); // 导出的表格名称，根据需要自己命名
-        export_json_to_excel(tHeader, data, `白名单excel`); // 导出的表格名称，根据需要自己命名
-      });
+    handleChange(file) {
+      this.fileTemp = file.raw;
+      if (this.fileTemp) {
+        if (
+          this.fileTemp.type ==
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+          this.fileTemp.type == "application/vnd.ms-excel"
+        ) {
+          this.importfxx(this.fileTemp);
+          this.$mess({
+            type: "success",
+            message: "上传成功",
+          });
+        } else {
+          this.$message({
+            type: "warning",
+            message: "附件格式错误，请删除后重新上传！",
+          });
+        }
+      } else {
+        this.$message({
+          type: "warning",
+          message: "请上传附件！",
+        });
+      }
     },
-    formatJson(filterVal, jsonData) {
-      return jsonData.map((v) => filterVal.map((j) => v[j]));
+    handleExceed() {
+      this.$message({
+        type: "warning",
+        message: "超出最大上传文件数量的限制！",
+      });
+      return;
+    },
+    handleRemove() {
+      this.fileTemp = null;
+    },
+    importfxx(event) {
+      console.log(event,'-----------');
+      let that = this;
+      var reader = new FileReader();
+      var XLSX = require("xlsx");
+      reader.onload = function (e) {
+        var data = e.target.result;
+        console.log(data);
+        var wb = XLSX.read(data, {
+          type: "buffer",
+        });
+        var outdata = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+        console.log(outdata);
+        outdata.map(v=>{
+          let obj = {};
+          obj.num = v["编号"];
+          obj.name = v["姓名"];
+          obj.gender = v["性别"];
+          obj.age = v["年龄"];
+          obj.userID = v["身份证号"];
+          obj.bankNumber = v["银行卡号"];
+          that.tableData.push(obj)
+        })
+      };
+      reader.readAsArrayBuffer(event);
     },
   },
   computed: {},
@@ -513,5 +500,16 @@ export default {
   margin-top: 16px;
   display: flex;
   justify-content: flex-end;
+}
+
+/* 文件导入input */
+input::-webkit-file-upload-button {
+  background: #efeeee;
+  color: #333;
+  border: 0;
+  padding: 0;
+  border-radius: 5px;
+  font-size: 12px;
+  box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.1), 0 0 10px rgba(0, 0, 0, 0.12);
 }
 </style>

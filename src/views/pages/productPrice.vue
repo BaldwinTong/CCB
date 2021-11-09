@@ -11,9 +11,10 @@
           :model="searchForm"
           label-width="80px"
           size="mini"
+          ref="searchForm"
         >
           <div class="search-item">
-            <el-form-item label="所属类别：">
+            <el-form-item label="所属类别：" prop="BelongType">
               <el-select v-model="searchForm.BelongType" placeholder="请选择">
                 <el-option
                   v-for="item in belongList"
@@ -24,7 +25,7 @@
                 </el-option>
               </el-select>
             </el-form-item>
-            <el-form-item label="录入时间：">
+            <el-form-item label="录入时间：" prop="date1">
               <el-date-picker
                 v-model="searchForm.date1"
                 type="date"
@@ -34,13 +35,13 @@
             </el-form-item>
           </div>
           <div class="search-item">
-            <el-form-item label="产品名称：">
+            <el-form-item label="产品名称：" prop="productName">
               <el-input
                 v-model="searchForm.productName"
                 placeholder="请输入"
               ></el-input>
             </el-form-item>
-            <el-form-item label="录入时间：">
+            <el-form-item label="录入时间：" prop="date2">
               <el-date-picker
                 v-model="searchForm.date2"
                 type="date"
@@ -50,13 +51,13 @@
             </el-form-item>
           </div>
           <div class="search-item">
-            <el-form-item label="当日价格：">
+            <el-form-item label="当日价格：" prop="todayPrice">
               <el-input
                 v-model="searchForm.todayPrice"
                 placeholder="请输入"
               ></el-input>
             </el-form-item>
-            <el-form-item label="录入人员：">
+            <el-form-item label="录入人员：" prop="getInUserName">
               <el-input
                 v-model="searchForm.getInUserName"
                 placeholder="请输入"
@@ -69,7 +70,9 @@
                 >搜索 <i class="el-icon-search"></i
               ></el-button>
               <br />
-              <el-button class="P-btn" @click="clearForm">清空</el-button>
+              <el-button class="P-btn" @click="clearForm('searchForm')"
+                >清空</el-button
+              >
             </el-form-item>
           </div>
         </el-form>
@@ -79,7 +82,7 @@
     <div class="W-content">
       <div class="W-box">
         <div class="W-btns">
-          <div class="addData">
+          <div class="addData" @click="addData">
             <i class="el-icon-plus addIcon"></i>
             <span>添加数据</span>
           </div>
@@ -88,7 +91,7 @@
               <i class="el-icon-edit-outline"></i>
               <span class="title">修改</span>
             </div>
-            <div class="handle-item two">
+            <div class="handle-item two" @click="deleteData">
               <i class="el-icon-delete"></i>
               <span class="title">删除</span>
             </div>
@@ -109,6 +112,7 @@
             style="width: 100%"
             highlight-current-row
             size="small"
+            @selection-change="handleSelectionChange"
           >
             <el-table-column type="selection" width="55"> </el-table-column>
             <el-table-column
@@ -118,7 +122,7 @@
               width="80px"
             >
             </el-table-column>
-            <el-table-column prop="type" label="所属类别" align="center">
+            <el-table-column prop="category" label="所属类别" align="center">
             </el-table-column>
             <el-table-column prop="productName" label="产品名称" align="center">
             </el-table-column>
@@ -142,7 +146,9 @@
             <el-table-column prop="handle" label="处理" align="center">
               <template slot-scope="scope">
                 <div slot="reference" class="name-wrapper">
-                  <el-tag size="medium">{{ scope.row.tag }}</el-tag>
+                  <el-tag size="medium">{{
+                    scope.row.tag ? "启用" : "禁用"
+                  }}</el-tag>
                 </div>
               </template>
             </el-table-column>
@@ -164,10 +170,18 @@
         </div>
       </div>
     </div>
+    <padd
+      v-if="showAddDataDialog"
+      :isshowDialog="showAddDataDialog"
+      @addCloseDialog="addCloseDialog"
+    ></padd>
+    <pedit></pedit>
   </div>
 </template>
 
 <script>
+import padd from "./components/proPrice/priceAddDialog.vue";
+import pedit from "./components/proPrice/priceEidtDialog.vue";
 export default {
   data() {
     return {
@@ -197,40 +211,74 @@ export default {
           label: "家禽类",
         },
       ],
-
       tableData: [
         {
           num: "0001",
-          type: "蔬菜类",
+          category: "蔬菜类",
           productName: "小白菜",
           todayPrice: "1.40",
           priceDate: "2021-06-20",
           getInDate: "2021-06-22",
-          getInPersonal:"王大锤",
-          tag: "启用",
+          getInPersonal: "王大锤",
+          tag: false,
         },
       ],
+      // 点击事件
+      showAddDataDialog: false,
+      pickeList: [], //选中
     };
   },
-  components: {},
+  components: { padd, pedit },
   created() {},
   methods: {
     search() {},
-    clearForm() {},
-    addData() {},
+    clearForm(formName) {
+      this.$refs[formName].resetFields();
+    },
+    addData() {
+      this.showAddDataDialog = true;
+    },
     handleClick(value) {
       console.log(value);
+    },
+    handleSelectionChange(val) {
+      this.pickeList = val;
+    },
+    deleteData() {
+      if (this.pickeList.length < 1) {
+        this.$mess("您还没有选中要删除的数据");
+        return false;
+      } else {
+        let numId = [];
+        this.pickeList.forEach((item) => {
+          numId.push(item.num);
+        });
+        let data = this.tableData.filter((v) => !numId.includes(v.num));
+        this.tableData = data;
+      }
+    },
+    addCloseDialog(e, data) {
+      console.log(e, data);
+      this.showAddDataDialog = e;
+      if (data) {
+        data.num = "000" + (this.tableData.length + 1);
+        this.tableData.push(data);
+      }
     },
   },
   computed: {},
 };
 </script>
 
-<style >
+<style scope>
 .P-btn {
   width: 72px;
 }
 .P-btn:last-child {
   margin-top: 20px;
+}
+.el-select .el-input__inner {
+  cursor: pointer;
+  padding-right: 0px;
 }
 </style>

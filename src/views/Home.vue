@@ -25,7 +25,7 @@ export default {
   components: { navAside, sellheader },
 };
 </script>
-<style>
+<style scoped>
 .home {
   height: 100%;
 }
@@ -59,7 +59,5 @@ body > .el-container {
   font-size: 12px;
 }
 
-.el-input__inner{
-  width: 220px !important;
-}
+
 </style>
