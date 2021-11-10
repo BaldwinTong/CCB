@@ -17,17 +17,23 @@
           :class="type1 == 2 ? 'typeActive' : 'status-item'"
           @click="changeAudit(2)"
         >
-          审核中
+          待审核
         </div>
         <div
           :class="type1 == 3 ? 'typeActive' : 'status-item'"
           @click="changeAudit(3)"
         >
-          已审核
+          审核中
         </div>
         <div
           :class="type1 == 4 ? 'typeActive' : 'status-item'"
           @click="changeAudit(4)"
+        >
+          已审核
+        </div>
+        <div
+          :class="type1 == 5 ? 'typeActive' : 'status-item'"
+          @click="changeAudit(5)"
         >
           无需审核
         </div>
@@ -66,50 +72,64 @@
         </div>
       </div>
     </div>
-
-    <div class="T-content">
-      <div class="cont-item" v-for="items in dataList" :key="items.id">
-        <div class="item-top">
-          <div class="top-left">
-            <img src="../../assets/bill.png" alt="" />
-            <div class="date">2021-06-20 08:55</div>
+    <div class="T-box">
+      <div class="T-content">
+        <div class="cont-item" v-for="items in dataList" :key="items.id">
+          <div class="item-top">
+            <div class="top-left">
+              <img src="../../assets/bill.png" alt="" />
+              <div class="date">{{ items.date }}</div>
+            </div>
+            <div class="top-right">
+              <div class="top-btn staycheckPending" v-if="items.type == 1">
+                待审核
+              </div>
+              <div class="top-btn alreadyPending" v-if="items.type == 2">
+                已审核
+              </div>
+              <div class="top-btn noNeedPending" v-if="items.type == 3">
+                无需审核
+              </div>
+              <div class="top-btn checkPending" v-if="items.type == 4">
+                审核中
+              </div>
+            </div>
           </div>
-          <div class="top-right">
-            <div class="top-btn checkPending" v-if="items.type=='待审核'">待审核</div>
-            <div class="top-btn alreadyPending" v-if="items.type=='已审核'">已审核</div>
-              <div class="top-btn noNeedPending" v-if="items.type=='无需审核'">无需审核</div>
-          </div>
-        </div>
-        <div class="item-info">
-          <div class="info-item">
-            <div class="line"></div>
-            <div class="info-title">交易重量：</div>
-            <div class="info-quantity">{{items.weight}}吨</div>
-          </div>
-          <div class="info-item">
-            <div class="line"></div>
-            <div class="info-title">单价：</div>
-            <div class="info-quantity">￥{{items.unitPrice}}</div>
-          </div>
-          <div class="info-item">
-            <div class="line"></div>
-            <div class="info-title">总价：</div>
-            <div class="info-quantity">￥{{items.totalPrice}}</div>
-          </div>
-          <div class="info-item">
-            <div class="line"></div>
-            <div class="info-title">交易对象：</div>
-            <div class="info-quantity">{{items.tradingUserName}}</div>
-          </div>
-          <div class="info-item">
-            <div class="line"></div>
-            <div class="info-title">是否需要审核：</div>
-            <div class="info-quantity">{{items.ischeck?'是':'否'}}</div>
-          </div>
-          <div class="info-item">
-            <div class="line"></div>
-            <div class="info-title">审核人员：</div>
-            <div class="info-quantity">{{items.checkUser}}</div>
+          <div class="item-info">
+            <div class="info-item">
+              <div class="line"></div>
+              <div class="info-title">交易重量：</div>
+              <div class="info-quantity">{{ items.weight }}吨</div>
+            </div>
+            <div class="info-item">
+              <div class="line"></div>
+              <div class="info-title">单价：</div>
+              <div class="info-quantity">￥{{ items.unitPrice }}</div>
+            </div>
+            <div class="info-item">
+              <div class="line"></div>
+              <div class="info-title">总价：</div>
+              <div class="info-quantity">￥{{ items.totalPrice }}</div>
+            </div>
+            <div class="info-item">
+              <div class="line"></div>
+              <div class="info-title">交易对象：</div>
+              <div class="info-quantity">{{ items.tradingUserName }}</div>
+            </div>
+            <div class="info-item">
+              <div class="line"></div>
+              <div class="info-title">是否需要审核：</div>
+              <div class="info-quantity">
+                {{ items.type == 3 ? "否" : "是" }}
+              </div>
+            </div>
+            <div class="info-item">
+              <div class="line"></div>
+              <div class="info-title">审核人员：</div>
+              <div class="info-quantity">
+                {{ items.type == 3 ? "无" : items.checkUser }}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -123,45 +143,28 @@ export default {
     return {
       type1: 1,
       type2: 1,
-      dataList: [
-        {
-          id:1,
-          weight: "10",
-          unitPrice: "200",
-          totalPrice: "360000",
-          tradingUserName:"王大锤",
-          ischeck:true,
-          checkUser:"王二小",
-          type:"已审核"
-        },
-        {
-          id:2,
-          weight: "8",
-          unitPrice: "20",
-          totalPrice: "60000",
-          tradingUserName:"王二锤",
-          ischeck:false,
-          checkUser:"无",
-          type:'无需审核'
-        },
-        {
-          id:3,
-          weight: "6",
-          unitPrice: "100",
-          totalPrice: "760000",
-          tradingUserName:"王三锤",
-          ischeck:true,
-          checkUser:"王三小",
-          type:'待审核'
-        },
-      ],
+      dataList: [],
     };
   },
   components: {},
-  created() {},
+  created() {
+    this.getData();
+  },
   methods: {
+    getData() {
+      this.$http
+        .get("/detailData")
+        .then((res) => {
+          console.log(res);
+          this.dataList = res.data;
+        })
+        .catch((fail) => {
+          console.log(fail);
+        });
+    },
     changeAudit(e) {
       this.type1 = e;
+      this.sifting(this.type1);
     },
     changeDate(e) {
       this.type2 = e;
@@ -214,12 +217,18 @@ export default {
   border-radius: 4px;
 }
 
+.T-box {
+  margin-top: 20px;
+  width: 100%;
+  height: 70vh;
+  overflow: auto;
+}
+
 .T-content {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   flex-wrap: wrap;
-  margin-top: 20px;
 }
 .T-content .cont-item {
   width: 48%;
@@ -256,9 +265,14 @@ export default {
   text-align: center;
 }
 
-.checkPending {
+.staycheckPending {
   border: 1px solid #f08c42;
   color: #f08c42;
+  border-radius: 4px;
+}
+.checkPending {
+  border: 1px solid rgb(68, 151, 243);
+  color: rgb(68, 151, 243);
   border-radius: 4px;
 }
 .alreadyPending {
@@ -285,7 +299,6 @@ export default {
   justify-content: flex-start;
   box-sizing: border-box;
   margin-top: 20px;
-  
 }
 .item-info .info-item .line {
   width: 6px;

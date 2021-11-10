@@ -68,10 +68,10 @@
             <span>添加数据</span>
           </div>
           <div class="handle-btns">
-            <div class="handle-item one" @click="editData">
+            <!-- <div class="handle-item one" @click="editData">
               <i class="el-icon-edit-outline"></i>
               <span class="title">修改</span>
-            </div>
+            </div> -->
             <div class="handle-item two" @click="deleteData">
               <i class="el-icon-delete"></i>
               <span class="title">删除</span>
@@ -133,6 +133,13 @@
             <el-table-column label="操作" align="center">
               <template slot-scope="scope">
                 <el-button
+                  @click="handleReset(scope.row)"
+                  type="primary"
+                  plain
+                  size="mini"
+                  >修改</el-button
+                >
+                <el-button
                   @click="handleDelete(scope.row)"
                   type="danger"
                   size="mini"
@@ -164,7 +171,7 @@
     <wed
       v-if="showEidtDialog"
       :isshowDialog="showEidtDialog"
-      :editData="pickeList"
+      :editData="rowObj"
       @editCloseDialog="editCloseDialog"
     ></wed>
   </div>
@@ -207,7 +214,7 @@ export default {
           bankNumber: "666XXXXXXXXXX4893",
         },
       ],
-
+      rowObj:{},
       pickeList: [], //修改
 
       //弹窗
@@ -234,14 +241,6 @@ export default {
     addData() {
       this.showAddDataDialog = true;
     },
-    editData() {
-      if (this.pickeList.length == 1) {
-        this.showEidtDialog = true;
-      } else {
-        this.$mess("您还没有选中或选择了多个要修改的数据");
-        return false;
-      }
-    },
     deleteData() {
       if (this.pickeList.length < 1) {
         this.$mess("您还没有选中要删除的数据");
@@ -254,6 +253,11 @@ export default {
         let data = this.tableData.filter((v) => !numId.includes(v.num));
         this.tableData = data;
       }
+    },
+    handleReset(row) {
+      console.log(131313213);
+      this.rowObj = row
+       this.showEidtDialog = true;
     },
 
     handleDelete(row) {
@@ -365,7 +369,7 @@ export default {
       this.fileTemp = null;
     },
     importfxx(event) {
-      console.log(event,'-----------');
+      console.log(event, "-----------");
       let that = this;
       var reader = new FileReader();
       var XLSX = require("xlsx");
@@ -377,7 +381,7 @@ export default {
         });
         var outdata = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
         console.log(outdata);
-        outdata.map(v=>{
+        outdata.map((v) => {
           let obj = {};
           obj.num = v["编号"];
           obj.name = v["姓名"];
@@ -385,8 +389,8 @@ export default {
           obj.age = v["年龄"];
           obj.userID = v["身份证号"];
           obj.bankNumber = v["银行卡号"];
-          that.tableData.push(obj)
-        })
+          that.tableData.push(obj);
+        });
       };
       reader.readAsArrayBuffer(event);
     },
@@ -456,7 +460,8 @@ export default {
 }
 
 .W-content .handle-btns {
-  width: 256px;
+  width: 175px;
+  border-radius: 2px;
   padding: 0 10px;
   box-sizing: border-box;
   background-color: #f1f4f8;

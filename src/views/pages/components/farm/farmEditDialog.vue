@@ -53,8 +53,8 @@ export default {
       default: false,
     },
     editData: {
-      type: Array,
-      default: () => [],
+      type: Object,
+      default: () => {},
     },
   },
   data() {
@@ -99,17 +99,13 @@ export default {
   },
   created() {
     this.dialogVisible = this.isshow;
-    this.list = this.editData;
-    this.getData();
+    this.dialogForm = this.editData;
   },
   methods: {
-    getData() {
-      this.dialogForm = this.list[0];
-    },
     onConfirm(formName) {
       this.$refs[formName].validate((valid) => {
         if (valid) {
-          this.$emit("editCloseDialog", false, this.dialogForm);
+          this.$emit("editcloseDialog", false, this.dialogForm);
         } else {
           console.log("error submit!!");
           return false;

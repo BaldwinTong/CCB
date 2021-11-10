@@ -13,7 +13,11 @@
             <el-input v-model="dialogForm.name"></el-input>
           </el-form-item>
           <el-form-item label="性别：" prop="gender">
-            <el-select v-model="dialogForm.gender" placeholder="请输入" clearable >
+            <el-select
+              v-model="dialogForm.gender"
+              placeholder="请输入"
+              clearable
+            >
               <el-option label="男" value="男"></el-option>
               <el-option label="女" value="女"></el-option>
             </el-select>
@@ -47,10 +51,10 @@ export default {
       type: Boolean,
       default: false,
     },
-    editData:{
-        type:Array,
-        default:()=>[]
-    }
+    editData: {
+      type: Object,
+      default: () => {},
+    },
   },
   data() {
     return {
@@ -73,22 +77,19 @@ export default {
           { required: true, message: "请输入银行卡号", trigger: "blur" },
         ],
       },
-      list:[]
+      list: {},
     };
   },
   created() {
     this.dialogVisible = this.isshowDialog;
-    this.list = this.editData;
-    this.getData();
+    console.log(this.editData);
+    this.dialogForm = this.editData;
   },
   methods: {
-    getData(){
-        this.dialogForm = this.list[0];
-    },
     onConfirm(formName) {
       this.$refs[formName].validate((valid) => {
         if (valid) {
-          this.$emit("editCloseDialog", false,this.dialogForm);
+          this.$emit("editCloseDialog", false, this.dialogForm);
         } else {
           console.log("error submit!!");
           return false;

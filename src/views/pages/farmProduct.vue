@@ -79,10 +79,6 @@
             <span>添加数据</span>
           </div>
           <div class="handle-btns">
-            <div class="handle-item one" @click="editData">
-              <i class="el-icon-edit-outline"></i>
-              <span class="title">修改</span>
-            </div>
             <div class="handle-item two" @click="deleteData">
               <i class="el-icon-delete"></i>
               <span class="title">删除</span>
@@ -148,6 +144,13 @@
             <el-table-column label="操作" align="center">
               <template slot-scope="scope">
                 <el-button
+                  @click="handleEdit(scope.row)"
+                  type="primary"
+                  plain
+                  size="mini"
+                  >编辑</el-button
+                >
+                <el-button
                   @click="handleClick(scope.row)"
                   type="danger"
                   size="mini"
@@ -176,7 +179,7 @@
 
     <farm-edit
       v-if="isshowEditvisible"
-      :editData="pickeList"
+      :editData="dataItem"
       :isshow="isshowEditvisible"
       @editcloseDialog="editcloseDialog"
     ></farm-edit>
@@ -236,6 +239,7 @@ export default {
       limitUpload: 1,
       fileTemp: null,
       pickeList: [], //修改
+      dataItem: {},
       isshowAddvisible: false,
       isshowEditvisible: false,
     };
@@ -258,14 +262,6 @@ export default {
     },
     addData() {
       this.isshowAddvisible = true;
-    },
-    editData() {
-      if (this.pickeList.length == 1) {
-        this.isshowEditvisible = true;
-      } else {
-        this.$mess("您还没有选中或选择了多个要修改的数据");
-        return false;
-      }
     },
 
     deleteData() {
@@ -386,7 +382,10 @@ export default {
       };
       reader.readAsArrayBuffer(event);
     },
-
+    handleEdit(row) {
+      this.dataItem = row;
+      this.isshowEditvisible = true;
+    },
     handleClick(row) {
       this.$confirm("此操作将删除此条数据, 是否继续?", "提示", {
         confirmButtonText: "确定",
@@ -474,7 +473,6 @@ export default {
 }
 
 .W-content .handle-btns {
-  width: 256px;
   padding: 0 10px;
   box-sizing: border-box;
   background-color: #f1f4f8;

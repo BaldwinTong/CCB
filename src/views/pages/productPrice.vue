@@ -87,10 +87,6 @@
             <span>添加数据</span>
           </div>
           <div class="handle-btns">
-            <div class="handle-item one" @click="editData">
-              <i class="el-icon-edit-outline"></i>
-              <span class="title">修改</span>
-            </div>
             <div class="handle-item two" @click="deleteData">
               <i class="el-icon-delete"></i>
               <span class="title">删除</span>
@@ -136,13 +132,13 @@
             </el-table-column>
             <el-table-column prop="category" label="所属类别" align="center">
             </el-table-column>
-            <el-table-column prop="productName" label="产品名称" align="center">
+            <el-table-column prop="productName" label="产品名称" align="center" width="100px">
             </el-table-column>
             <el-table-column
               prop="todayPrice"
-              width="180px"
               label="当日价格(元/斤)"
               align="center"
+              
             >
             </el-table-column>
             <el-table-column prop="priceDate" label="单价日期" align="center">
@@ -153,9 +149,10 @@
               prop="getInPersonal"
               label="录入人员"
               align="center"
+              width="100px"
             >
             </el-table-column>
-            <el-table-column prop="handle" label="处理" align="center">
+            <el-table-column prop="handle" label="处理" align="center" width="80px">
               <template slot-scope="scope">
                 <div slot="reference" class="name-wrapper">
                   <el-tag
@@ -175,6 +172,13 @@
             <el-table-column label="操作" align="center">
               <template slot-scope="scope">
                 <el-button
+                  @click="handleEdit(scope.row)"
+                  type="primary"
+                  plain
+                  size="mini"
+                  >编辑</el-button
+                >
+                <el-button
                   @click="handleClick(scope.row)"
                   type="danger"
                   size="mini"
@@ -184,7 +188,11 @@
             </el-table-column>
           </el-table>
           <div class="pagination">
-            <el-pagination background layout="prev, pager, next" :total="tableData.length">
+            <el-pagination
+              background
+              layout="prev, pager, next"
+              :total="tableData.length"
+            >
             </el-pagination>
           </div>
         </div>
@@ -197,7 +205,7 @@
     ></padd>
     <pedit
       v-if="isshowEditvisible"
-      :editData="pickeList"
+      :editData="dataItem"
       :isshowDialog="isshowEditvisible"
       @editcloseDialog="editcloseDialog"
     ></pedit>
@@ -253,6 +261,7 @@ export default {
       showAddDataDialog: false,
       isshowEditvisible: false,
       pickeList: [], //选中
+      dataItem: {},
       limitUpload: 1,
       fileTemp: null,
     };
@@ -266,6 +275,10 @@ export default {
     },
     addData() {
       this.showAddDataDialog = true;
+    },
+    handleEdit(row) {
+      this.dataItem = row;
+      this.isshowEditvisible = true;
     },
     handleClick(row) {
       this.$confirm("此操作将删除此条数据, 是否继续?", "提示", {
@@ -321,14 +334,7 @@ export default {
         this.tableData.push(data);
       }
     },
-    editData() {
-      if (this.pickeList.length == 1) {
-        this.isshowEditvisible = true;
-      } else {
-        this.$mess("您还没有选中或选择了多个要修改的数据");
-        return false;
-      }
-    },
+
     editcloseDialog(e, data) {
       console.log(e, "-----");
       this.isshowEditvisible = e;
