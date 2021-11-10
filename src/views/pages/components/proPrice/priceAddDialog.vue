@@ -83,6 +83,7 @@ export default {
         category: "",
         productName: "",
         todayPrice: "",
+        priceDate:"",
         getInDate: "",
         getInPersonal: "",
         tag: true,

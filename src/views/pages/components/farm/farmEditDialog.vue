@@ -121,7 +121,7 @@ export default {
   watch: {
     dialogVisible() {
       if (!this.dialogVisible) {
-        this.$emit("editCloseDialog", false);
+        this.$emit("editcloseDialog", false);
       }
     },
   },

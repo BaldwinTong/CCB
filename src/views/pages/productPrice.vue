@@ -87,7 +87,7 @@
             <span>添加数据</span>
           </div>
           <div class="handle-btns">
-            <div class="handle-item one">
+            <div class="handle-item one" @click="editData">
               <i class="el-icon-edit-outline"></i>
               <span class="title">修改</span>
             </div>
@@ -95,13 +95,25 @@
               <i class="el-icon-delete"></i>
               <span class="title">删除</span>
             </div>
-            <div class="handle-item thr">
+            <div class="handle-item thr" @click="outExe">
               <i class="iconfont icon-exportdaochu"></i>
               <span class="title">导出</span>
             </div>
             <div class="handle-item thr">
               <i class="iconfont icon-daoru"></i>
-              <span class="title">导入</span>
+              <el-upload
+                class="upload-demo"
+                :show-file-list="false"
+                action=""
+                :on-change="handleChange"
+                :on-remove="handleRemove"
+                :on-exceed="handleExceed"
+                :limit="limitUpload"
+                accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                :auto-upload="false"
+              >
+                <span class="title">导入</span>
+              </el-upload>
             </div>
           </div>
         </div>
@@ -146,9 +158,17 @@
             <el-table-column prop="handle" label="处理" align="center">
               <template slot-scope="scope">
                 <div slot="reference" class="name-wrapper">
-                  <el-tag size="medium">{{
-                    scope.row.tag ? "启用" : "禁用"
-                  }}</el-tag>
+                  <el-tag
+                    size="medium"
+                    effect="plain"
+                    type=""
+                    v-if="scope.row.tag"
+                  >
+                    启用</el-tag
+                  >
+                  <el-tag size="medium" effect="plain" type="danger" v-else>
+                    禁用</el-tag
+                  >
                 </div>
               </template>
             </el-table-column>
@@ -164,7 +184,7 @@
             </el-table-column>
           </el-table>
           <div class="pagination">
-            <el-pagination background layout="prev, pager, next" :total="100">
+            <el-pagination background layout="prev, pager, next" :total="tableData.length">
             </el-pagination>
           </div>
         </div>
@@ -175,13 +195,19 @@
       :isshowDialog="showAddDataDialog"
       @addCloseDialog="addCloseDialog"
     ></padd>
-    <pedit></pedit>
+    <pedit
+      v-if="isshowEditvisible"
+      :editData="pickeList"
+      :isshowDialog="isshowEditvisible"
+      @editcloseDialog="editcloseDialog"
+    ></pedit>
   </div>
 </template>
 
 <script>
 import padd from "./components/proPrice/priceAddDialog.vue";
 import pedit from "./components/proPrice/priceEidtDialog.vue";
+import export2Excel from "../../utils/exportfile.js";
 export default {
   data() {
     return {
@@ -225,7 +251,10 @@ export default {
       ],
       // 点击事件
       showAddDataDialog: false,
+      isshowEditvisible: false,
       pickeList: [], //选中
+      limitUpload: 1,
+      fileTemp: null,
     };
   },
   components: { padd, pedit },
@@ -238,8 +267,22 @@ export default {
     addData() {
       this.showAddDataDialog = true;
     },
-    handleClick(value) {
-      console.log(value);
+    handleClick(row) {
+      this.$confirm("此操作将删除此条数据, 是否继续?", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(() => {
+          this.tableData = this.tableData.filter((v) => v.num != row.num);
+          this.$mess({
+            message: "删除成功",
+            type: "success",
+          });
+        })
+        .catch(() => {
+          this.$mess("取消删除");
+        });
     },
     handleSelectionChange(val) {
       this.pickeList = val;
@@ -249,21 +292,145 @@ export default {
         this.$mess("您还没有选中要删除的数据");
         return false;
       } else {
-        let numId = [];
-        this.pickeList.forEach((item) => {
-          numId.push(item.num);
-        });
-        let data = this.tableData.filter((v) => !numId.includes(v.num));
-        this.tableData = data;
+        this.$confirm(
+          `此操作将删除这${this.pickeList.length}条数据, 是否继续?`,
+          "提示",
+          {
+            confirmButtonText: "确定",
+            cancelButtonText: "取消",
+            type: "warning",
+          }
+        )
+          .then(() => {
+            let numId = [];
+            this.pickeList.forEach((item) => {
+              numId.push(item.num);
+            });
+            let data = this.tableData.filter((v) => !numId.includes(v.num));
+            this.tableData = data;
+          })
+          .catch(() => {
+            this.$mess("取消删除");
+          });
       }
     },
     addCloseDialog(e, data) {
-      console.log(e, data);
       this.showAddDataDialog = e;
       if (data) {
         data.num = "000" + (this.tableData.length + 1);
         this.tableData.push(data);
       }
+    },
+    editData() {
+      if (this.pickeList.length == 1) {
+        this.isshowEditvisible = true;
+      } else {
+        this.$mess("您还没有选中或选择了多个要修改的数据");
+        return false;
+      }
+    },
+    editcloseDialog(e, data) {
+      console.log(e, "-----");
+      this.isshowEditvisible = e;
+      console.log(data);
+    },
+
+    // 导出
+    outExe() {
+      this.$confirm("此操作将导出excel文件, 是否继续?", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(() => {
+          const tHeader = [
+            "编号",
+            "所属类型",
+            "产品名称",
+            "当日价格",
+            "单价日期",
+            "录入时间",
+            "录入人员",
+            "处理",
+          ]; // 导出的表头名
+          const filterVal = [
+            "num",
+            "category",
+            "productName",
+            "todayPrice",
+            "priceDate",
+            "getInDate",
+            "getInPersonal",
+            "tag",
+          ]; // 导出的表头字段名
+          export2Excel(this.tableData, tHeader, filterVal, "产品单价");
+        })
+        .catch(() => {
+          console.log("导出失败");
+        });
+    },
+    // 导入
+
+    handleChange(file) {
+      this.fileTemp = file.raw;
+      if (this.fileTemp) {
+        if (
+          this.fileTemp.type ==
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+          this.fileTemp.type == "application/vnd.ms-excel"
+        ) {
+          this.importfxx(this.fileTemp);
+          this.$mess({
+            type: "success",
+            message: "上传成功",
+          });
+        } else {
+          this.$message({
+            type: "warning",
+            message: "附件格式错误，请删除后重新上传！",
+          });
+        }
+      } else {
+        this.$message({
+          type: "warning",
+          message: "请上传附件！",
+        });
+      }
+    },
+    handleExceed() {
+      this.$message({
+        type: "warning",
+        message: "超出最大上传文件数量的限制！",
+      });
+      return;
+    },
+    handleRemove() {
+      this.fileTemp = null;
+    },
+    importfxx(event) {
+      let that = this;
+      var reader = new FileReader();
+      var XLSX = require("xlsx");
+      reader.onload = function (e) {
+        var data = e.target.result;
+        var wb = XLSX.read(data, {
+          type: "buffer",
+        });
+        var outdata = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+        outdata.map((v) => {
+          let obj = {};
+          obj.num = v["编号"];
+          obj.category = v["所属类型"];
+          obj.productName = v["产品名称"];
+          obj.todayPrice = v["当日价格"];
+          obj.priceDate = v["单价日期"];
+          obj.getInDate = v["录入时间"];
+          obj.getInPersonal = v["录入人员"];
+          obj.tag = v["处理"];
+          that.tableData.push(obj);
+        });
+      };
+      reader.readAsArrayBuffer(event);
     },
   },
   computed: {},
