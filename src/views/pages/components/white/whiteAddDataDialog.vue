@@ -21,8 +21,8 @@
           <el-form-item label="年龄：" prop="age">
             <el-input v-model="dialogForm.age"></el-input>
           </el-form-item>
-          <el-form-item label="身份证号：" prop="userID">
-            <el-input v-model="dialogForm.userID"></el-input>
+          <el-form-item label="身份证号：" prop="idCardNum">
+            <el-input v-model="dialogForm.idCardNum"></el-input>
           </el-form-item>
           <el-form-item label="银行卡号：" prop="bankNumber">
             <el-input v-model="dialogForm.bankNumber"></el-input>
@@ -55,14 +55,14 @@ export default {
         name: "",
         gender: "",
         age: "",
-        userID: "",
+        idCardNum: "",
         bankNumber: "",
       },
       dialogRule: {
         name: [{ required: true, message: "请输入姓名", trigger: "blur" }],
         gender: [{ required: true, message: "请选择性别", trigger: "change" }],
         age: [{ required: true, message: "请输入年龄", trigger: "blur" }],
-        userID: [
+        idCardNum: [
           { required: true, message: "请输入身份证号", trigger: "blur" },
         ],
         bankNumber: [

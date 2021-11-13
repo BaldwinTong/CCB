@@ -14,9 +14,9 @@
             size="medium "
             hide-required-asterisk
           >
-            <el-form-item label="用户名" prop="userName">
+            <el-form-item label="用户名" prop="userNameOrEmailAddress">
               <el-input
-                v-model="loginForm.userName"
+                v-model="loginForm.userNameOrEmailAddress"
                 autocomplete="off"
               ></el-input>
             </el-form-item>
@@ -33,13 +33,17 @@
           <div>忘记密码？</div>
         </div>
         <div class="login-btns">
-          <el-checkbox v-model="KeepInfo" @change="picker">记住</el-checkbox>
-          <input
-            type="button"
+          <el-checkbox v-model="KeepInfo" @change="pickerRemember"
+            >记住</el-checkbox
+          >
+          <div
             class="sub-btn"
-            value="登录"
             @click="loginConfirm"
-          />
+            v-loading="loading"
+            element-loading-spinner="el-icon-loading"
+          >
+            登录
+          </div>
         </div>
       </div>
     </div>
@@ -47,50 +51,74 @@
 </template>
 
 <script>
-// import api from '../api/index'
+import { Login } from "../api/login";
 export default {
-
   data() {
     return {
+      loading: false,
       loginForm: {
-        userName: "",
+        userNameOrEmailAddress: "",
         password: "",
       },
       KeepInfo: false,
       loginRules: {
-        userName: [
-          { required: true, message: "请输入活动名称", trigger: "blur" },
+        userNameOrEmailAddress: [
+          { required: true, message: "请输入用户名", trigger: "blur" },
         ],
-        password: [
-          { required: true, message: "请输入活动名称", trigger: "blur" },
-        ],
+        password: [{ required: true, message: "请输入密码", trigger: "blur" }],
       },
     };
   },
   created() {},
   beforeMount() {
-    var str = localStorage.getItem('userInfo');
+    var str = localStorage.getItem("userInfo");
     if (str) {
-     this.loginForm = JSON.parse(str);
+      this.loginForm = JSON.parse(str);
     }
   },
-  mounted(){
-  },
+  mounted() {},
   methods: {
-    picker(e) {
+    pickerRemember(e) {
       this.KeepInfo = e;
     },
     loginConfirm() {
+      this.loading = true;
+      console.log(this.loading);
       if (this.KeepInfo) {
         localStorage.setItem("userInfo", JSON.stringify(this.loginForm));
       }
-      this.$refs['loginForm'].validate((valid)=>{
+      this.$refs["loginForm"].validate((valid) => {
         if (valid) {
-          this.$router.push('/home')
-        }else{
-          alert('登录失败')
+          Login(this.loginForm)
+            .then((res) => {
+              console.log(res.data.result.accessToken);
+              if (res.status == 200) {
+                this.$store.commit(
+                  "token/setToken",
+                  res.data.result.accessToken
+                );
+                window.localStorage.setItem(
+                  "TOKEN",
+                  res.data.result.accessToken
+                );
+                setTimeout(() => {
+                  this.loading = false;
+                }, 1500);
+                this.$mess({ type: "success", message: "登陆成功" });
+                setTimeout(() => {
+                  this.$router.push('/home')
+                }, 2000);
+              }
+            })
+            .catch((fail) => {
+              this.loading = false;
+              this.$mess(fail.response.data.error.message);
+              return fail;
+            });
+        } else {
+          alert("登录失败");
         }
-      })
+      });
     },
   },
 };
@@ -104,7 +132,7 @@ export default {
 html,
 body {
   height: 100%;
-  background:  #5272d8;
+  background: #5272d8;
 }
 
 .login {
@@ -113,7 +141,7 @@ body {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%,-50%);
+  transform: translate(-50%, -50%);
 }
 
 .logo {
@@ -158,6 +186,8 @@ body {
   height: 32px;
   border: none;
   color: #fff;
+  text-align: center;
+  line-height: 32px;
   padding-bottom: 2px;
   font-size: 14px;
   font-weight: bold;

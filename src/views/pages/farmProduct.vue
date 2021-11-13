@@ -417,7 +417,7 @@ export default {
 }
 .search .search-box {
   width: 100%;
-  margin-top: 20px;
+  margin-top: 10px;
   background-color: #fff;
   padding: 22px 12px 0;
   box-sizing: border-box;

@@ -20,9 +20,9 @@
                 placeholder="请输入"
               ></el-input>
             </el-form-item>
-            <el-form-item label="身份证号：" prop="userID">
+            <el-form-item label="身份证号：" prop="idCardNum">
               <el-input
-                v-model="searchForm.userID"
+                v-model="searchForm.idCardNum"
                 placeholder="请输入"
               ></el-input>
             </el-form-item>
@@ -68,10 +68,6 @@
             <span>添加数据</span>
           </div>
           <div class="handle-btns">
-            <!-- <div class="handle-item one" @click="editData">
-              <i class="el-icon-edit-outline"></i>
-              <span class="title">修改</span>
-            </div> -->
             <div class="handle-item two" @click="deleteData">
               <i class="el-icon-delete"></i>
               <span class="title">删除</span>
@@ -101,7 +97,7 @@
 
         <div class="W-table">
           <el-table
-            :data="tableData"
+            :data="tableData.slice((currentPage-1)*pageSize,currentPage*pageSize)"
             style="width: 100%"
             highlight-current-row
             size="small"
@@ -110,14 +106,29 @@
             <el-table-column type="selection" width="55"> </el-table-column>
             <el-table-column prop="num" label="编号" align="center">
             </el-table-column>
-            <el-table-column prop="name" label="姓名" align="center">
-            </el-table-column>
-            <el-table-column prop="gender" label="性别" align="center">
-            </el-table-column>
-            <el-table-column prop="age" label="年龄" align="center">
+            <el-table-column
+              prop="name"
+              label="姓名"
+              width="100px"
+              align="center"
+            >
             </el-table-column>
             <el-table-column
-              prop="userID"
+              prop="gender"
+              label="性别"
+              width="100px"
+              align="center"
+            >
+            </el-table-column>
+            <el-table-column
+              prop="age"
+              label="年龄"
+              width="100px"
+              align="center"
+            >
+            </el-table-column>
+            <el-table-column
+              prop="idCardNum"
               label="身份证号"
               width="180px"
               align="center"
@@ -130,7 +141,7 @@
               align="center"
             >
             </el-table-column>
-            <el-table-column label="操作" align="center">
+            <el-table-column label="操作" fixed="right" align="center">
               <template slot-scope="scope">
                 <el-button
                   @click="handleReset(scope.row)"
@@ -151,7 +162,11 @@
           <div class="pagination">
             <el-pagination
               background
-              layout="prev, pager, next"
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+              :current-page="currentPage"
+              :page-size="pageSize"
+              layout="total,prev, pager, next"
               :total="this.tableData.length"
             >
             </el-pagination>
@@ -182,6 +197,7 @@ import Mock from "mockjs";
 import wadd from "./components/white/whiteAddDataDialog.vue";
 import wed from "./components/white/whiteEditDialog.vue";
 import export2Excel from "../../utils/exportfile.js";
+import { GetAll, Create, Update, Delete } from "../../api/whiteList";
 export default {
   components: {
     wadd,
@@ -189,32 +205,21 @@ export default {
   },
   data() {
     return {
+      //分页
+      currentPage: 1,
+      // total: 0, //总条数
+      page: 1, //初始显示第几页
+      pageSize: 8, //每页显示多少数据
+
       searchForm: {
         name: "",
-        userID: "",
+        idCardNum: "",
         gender: "",
         bankNumber: "",
         age: "",
       },
-      tableData: [
-        {
-          num: "0001",
-          name: "王小虎",
-          gender: "男",
-          age: "34",
-          userID: "440XXXXXXXXXXX8870",
-          bankNumber: "666XXXXXXXXXX4883",
-        },
-        {
-          num: "0002",
-          name: "王大虎",
-          gender: "男",
-          age: "31",
-          userID: "440XXXXXXXXXXX8880",
-          bankNumber: "666XXXXXXXXXX4893",
-        },
-      ],
-      rowObj:{},
+      tableData: [],
+      rowObj: {},
       pickeList: [], //修改
 
       //弹窗
@@ -230,8 +235,28 @@ export default {
     this.getData();
   },
   methods: {
-    search() {},
-    getData() {},
+    search() {
+      let params = this.searchForm;
+      GetAll(params)
+        .then((res) => {
+          let list = res.data.result.items;
+          this.tableData = list;
+        })
+        .catch((fail) => {
+          console.log(fail);
+        });
+    },
+    getData() {
+      let params = {};
+      GetAll(params)
+        .then((res) => {
+          let list = res.data.result.items;
+          this.tableData = list;
+        })
+        .catch((fail) => {
+          console.log(fail);
+        });
+    },
     clearForm(formName) {
       this.$refs[formName].resetFields();
     },
@@ -256,8 +281,8 @@ export default {
     },
     handleReset(row) {
       console.log(131313213);
-      this.rowObj = row
-       this.showEidtDialog = true;
+      this.rowObj = row;
+      this.showEidtDialog = true;
     },
 
     handleDelete(row) {
@@ -267,11 +292,19 @@ export default {
         type: "warning",
       })
         .then(() => {
-          this.tableData = this.tableData.filter((v) => v.num != row.num);
-          this.$mess({
-            message: "删除成功",
-            type: "success",
-          });
+          let params = { id: row.id };
+          Delete(params)
+            .then((res) => {
+              console.log(res, "delete");
+              this.tableData = this.tableData.filter((v) => v.id != row.id);
+              this.$mess({
+                message: "删除成功",
+                type: "success",
+              });
+            })
+            .catch((fail) => {
+              console.log(fail);
+            });
         })
         .catch(() => {
           this.$mess("取消删除");
@@ -280,25 +313,46 @@ export default {
 
     addCloseDialog(e, data) {
       this.showAddDataDialog = e;
+      data.num = Mock.mock("@id()");
       if (data) {
-        console.log(data);
-        let id = Mock.mock({
-          id: Mock.Random.id("@id"),
-        });
-        data.num = id.id;
-        this.tableData.push(data);
+        Create(data)
+          .then((res) => {
+            console.log(res);
+            this.tableData.push(data);
+          })
+          .catch((fail) => {
+            console.log(fail);
+          });
       }
     },
 
     editCloseDialog(e, data) {
       this.showEidtDialog = e;
       if (data) {
-        this.tableData.forEach((item) => {
-          if (data.num == item.num) {
-            item = data;
-          }
-        });
+        console.log(data);
+        Update(data)
+          .then((res) => {
+            console.log(res, "--------");
+            this.tableData = this.tableData.map((item) =>
+              item.id === data.id ? data : item
+            );
+          })
+          .catch((fail) => {
+            console.log(fail);
+          });
       }
+    },
+
+    /**
+     * 分页
+     */
+    handleSizeChange(val) {
+      this.pageSize = val;
+      console.log(`每页 ${val} 条`);
+    },
+    handleCurrentChange(val) {
+      this.currentPage = val;
+      console.log(`当前页: ${val}`);
     },
 
     // 导出
@@ -322,7 +376,7 @@ export default {
             "name",
             "gender",
             "age",
-            "userID",
+            "idCardNum",
             "bankNumber",
           ]; // 导出的表头字段名
           export2Excel(this.tableData, tHeader, filterVal, "白名单");
@@ -387,7 +441,7 @@ export default {
           obj.name = v["姓名"];
           obj.gender = v["性别"];
           obj.age = v["年龄"];
-          obj.userID = v["身份证号"];
+          obj.idCardNum = v["身份证号"];
           obj.bankNumber = v["银行卡号"];
           that.tableData.push(obj);
         });
@@ -408,7 +462,7 @@ export default {
 }
 .search .search-box {
   width: 100%;
-  margin-top: 20px;
+  margin-top: 10px;
   background-color: #fff;
   padding-top: 22px;
   box-sizing: border-box;
