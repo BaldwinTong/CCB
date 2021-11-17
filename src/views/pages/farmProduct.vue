@@ -14,47 +14,47 @@
           size="mini"
         >
           <div class="search-item">
-            <el-form-item label="所属类别：" prop="BelongType">
-              <el-select v-model="searchForm.BelongType" placeholder="请选择">
+            <el-form-item label="所属类别：" prop="Category">
+              <el-select v-model="searchForm.Category" placeholder="请选择">
                 <el-option
                   v-for="item in belongList"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value"
+                  :key="item.name"
+                  :label="item.name"
+                  :value="item.name"
                 >
                 </el-option>
               </el-select>
             </el-form-item>
-            <el-form-item label="最高价格：" prop="hightPrice">
+            <el-form-item label="最高价格：" prop="HighestPrice">
               <el-input
                 class="padd-right"
-                v-model="searchForm.hightPrice"
+                v-model="searchForm.HighestPrice"
                 placeholder="请输入"
               ></el-input>
               <div class="unit">元/斤</div>
             </el-form-item>
           </div>
           <div class="search-item">
-            <el-form-item label="产品名称：" prop="productName">
+            <el-form-item label="产品名称：" prop="ProductName">
               <el-input
-                v-model="searchForm.productName"
+                v-model="searchForm.ProductName"
                 placeholder="请输入"
               ></el-input>
             </el-form-item>
-            <el-form-item label="年交易量：" prop="yearValue">
+            <el-form-item label="年交易量：" prop="YearValue">
               <el-input
                 class="padd-right"
-                v-model="searchForm.yearValue"
+                v-model="searchForm.YearValue"
                 placeholder="请输入"
               ></el-input>
               <div class="unit">吨</div>
             </el-form-item>
           </div>
           <div class="search-item">
-            <el-form-item label="最低价格：" prop="bottomPrice">
+            <el-form-item label="最低价格：" prop="BottomPrice">
               <el-input
                 class="padd-right"
-                v-model="searchForm.bottomPrice"
+                v-model="searchForm.BottomPrice"
                 placeholder="请输入"
               ></el-input>
               <div class="unit">元/斤</div>
@@ -108,7 +108,12 @@
 
         <div class="W-table">
           <el-table
-            :data="tableData"
+            :data="
+              tableData.slice(
+                (currentPage - 1) * pageSize,
+                currentPage * pageSize
+              )
+            "
             style="width: 100%"
             highlight-current-row
             size="small"
@@ -162,8 +167,12 @@
           <div class="pagination">
             <el-pagination
               background
-              layout="prev, pager, next"
-              :total="tableData.length"
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+              :current-page="currentPage"
+              :page-size="pageSize"
+              layout="total,prev, pager, next"
+              :total="this.tableData.length"
             >
             </el-pagination>
           </div>
@@ -190,52 +199,32 @@
 import farmAdd from "./components/farm/farmAddDialog.vue";
 import farmEdit from "./components/farm/farmEditDialog.vue";
 import export2Excel from "../../utils/exportfile.js";
+import {
+  GetAll,
+  Create,
+  Update,
+  Delete,
+  BatchDelete,
+} from "../../api/farmProduce.js";
+import { CategoryGetAll } from "../../api/FarmProductCategory.js";
 export default {
   data() {
     return {
+      //分页
+      currentPage: 1,
+      // total: 0, //总条数
+      page: 1, //初始显示第几页
+      pageSize: 8, //每页显示多少数据
+
       searchForm: {
-        BelongType: "",
-        hightPrice: "",
-        productName: "",
-        yearValue: "",
-        bottomPrice: "",
+        Category: "",
+        HighestPrice: "",
+        ProductName: "",
+        YearValue: "",
+        BottomPrice: "",
       },
-      tableData: [
-        {
-          num: "0001",
-          category: "蔬菜类",
-          productName: "小白菜",
-          bottomPrice: "1.40",
-          highestPrice: "4.60",
-          yearValue: "200.62",
-        },
-        {
-          num: "0002",
-          category: "蔬菜类",
-          productName: "西蓝花",
-          bottomPrice: "3.50",
-          highestPrice: "5.50",
-          yearValue: "400.62",
-        },
-      ],
-      belongList: [
-        {
-          value: "蔬菜类",
-          label: "蔬菜类",
-        },
-        {
-          value: "瓜果类",
-          label: "瓜果类",
-        },
-        {
-          value: "海鲜类",
-          label: "海鲜类",
-        },
-        {
-          value: "家禽类",
-          label: "家禽类",
-        },
-      ],
+      tableData: [],
+      belongList: [],
       limitUpload: 1,
       fileTemp: null,
       pickeList: [], //修改
@@ -249,11 +238,31 @@ export default {
     farmEdit,
   },
   created() {
-    this.getData();
+    this.getClassify();
+    this.getData(this.searchForm);
   },
   methods: {
-    getData() {},
-    search() {},
+    getClassify() {
+      CategoryGetAll()
+        .then((res) => {
+          this.belongList = res.data.result.items;
+        })
+        .catch((fail) => {
+          console.log(fail);
+        });
+    },
+    getData(data) {
+      GetAll(data)
+        .then((res) => {
+          this.tableData = res.data.result.items;
+        })
+        .catch((fail) => {
+          console.log(fail);
+        });
+    },
+    search() {
+      this.getData(this.searchForm);
+    },
     clearForm(formName) {
       this.$refs[formName].resetFields();
     },
@@ -269,12 +278,40 @@ export default {
         this.$mess("您还没有选中要删除的数据");
         return false;
       } else {
-        let numId = [];
-        this.pickeList.forEach((item) => {
-          numId.push(item.num);
-        });
-        let data = this.tableData.filter((v) => !numId.includes(v.num));
-        this.tableData = data;
+        this.$confirm("此操作将删除此条数据, 是否继续?", "提示", {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning",
+        })
+          .then(() => {
+            let numId = [];
+            this.pickeList.forEach((item) => {
+              numId.push(item.id);
+            });
+
+            BatchDelete(numId)
+              .then((res) => {
+                if (res.status == 200) {
+                  let data = this.tableData.filter(
+                    (v) => !numId.includes(v.id)
+                  );
+                  this.tableData = data;
+                  this.$mess({
+                    type: "success",
+                    message: "删除成功",
+                  });
+                }
+              })
+              .catch((fail) => {
+                console.log(fail);
+              });
+          })
+          .catch(() => {
+            this.$mess({
+              type: "info",
+              message: "取消删除",
+            });
+          });
       }
     },
 
@@ -282,12 +319,34 @@ export default {
       this.isshowAddvisible = e;
       if (data) {
         data.num = "000" + (this.tableData.length + 1);
-        this.tableData.push(data);
+        Create(data)
+          .then((res) => {
+            if (res.status == 200) {
+              this.getData(this.searchForm);
+            }
+          })
+          .catch((fail) => {
+            console.log(fail);
+          });
       }
     },
     editcloseDialog(e, data) {
       this.isshowEditvisible = e;
-      console.log(data);
+      if (data) {
+        Update(data)
+          .then((res) => {
+            if (res.status == 200) {
+              this.$mess({
+                message: "修改成功",
+                type: "success",
+              });
+              this.getData(this.searchForm);
+            }
+          })
+          .catch((fail) => {
+            console.log(fail);
+          });
+      }
     },
 
     // 导出
@@ -309,10 +368,10 @@ export default {
           const filterVal = [
             "num",
             "category",
-            "productName",
-            "bottomPrice",
-            "highestPrice",
-            "yearValue",
+            "ProductName",
+            "BottomPrice",
+            "HighestPrice",
+            "YearValue",
           ]; // 导出的表头字段名
           export2Excel(this.tableData, tHeader, filterVal, "农产品");
         })
@@ -373,10 +432,10 @@ export default {
           let obj = {};
           obj.num = v["编号"];
           obj.category = v["所属类型"];
-          obj.productName = v["产品名称"];
-          obj.bottomPrice = v["最低价格"];
-          obj.highestPrice = v["最高价格"];
-          obj.yearValue = v["年交易量"];
+          obj.ProductName = v["产品名称"];
+          obj.BottomPrice = v["最低价格"];
+          obj.HighestPrice = v["最高价格"];
+          obj.YearValue = v["年交易量"];
           that.tableData.push(obj);
         });
       };
@@ -393,15 +452,35 @@ export default {
         type: "warning",
       })
         .then(() => {
-          this.tableData = this.tableData.filter((v) => v.num != row.num);
-          this.$mess({
-            message: "删除成功",
-            type: "success",
-          });
+          Delete({ id: row.id })
+            .then((res) => {
+              if (res.status == 200) {
+                this.tableData = this.tableData.filter((v) => v.id != row.id);
+                this.$mess({
+                  message: "删除成功",
+                  type: "success",
+                });
+              }
+            })
+            .catch((fail) => {
+              console.log(fail);
+            });
         })
         .catch(() => {
           this.$mess("取消删除");
         });
+    },
+
+    /**
+     * 分页
+     */
+    handleSizeChange(val) {
+      this.pageSize = val;
+      console.log(`每页 ${val} 条`);
+    },
+    handleCurrentChange(val) {
+      this.currentPage = val;
+      console.log(`当前页: ${val}`);
     },
   },
   computed: {},

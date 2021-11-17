@@ -83,15 +83,15 @@ export default {
     },
     loginConfirm() {
       this.loading = true;
-      console.log(this.loading);
       if (this.KeepInfo) {
         localStorage.setItem("userInfo", JSON.stringify(this.loginForm));
+      }else{
+        localStorage.removeItem("userInfo")
       }
       this.$refs["loginForm"].validate((valid) => {
         if (valid) {
           Login(this.loginForm)
             .then((res) => {
-              console.log(res.data.result.accessToken);
               if (res.status == 200) {
                 this.$store.commit(
                   "token/setToken",
@@ -106,8 +106,8 @@ export default {
                 }, 1500);
                 this.$mess({ type: "success", message: "登陆成功" });
                 setTimeout(() => {
-                  this.$router.push('/home')
-                }, 2000);
+                  this.$router.push("/home");
+                }, 1510);
               }
             })
             .catch((fail) => {

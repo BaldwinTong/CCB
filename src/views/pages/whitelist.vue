@@ -97,7 +97,12 @@
 
         <div class="W-table">
           <el-table
-            :data="tableData.slice((currentPage-1)*pageSize,currentPage*pageSize)"
+            :data="
+              tableData.slice(
+                (currentPage - 1) * pageSize,
+                currentPage * pageSize
+              )
+            "
             style="width: 100%"
             highlight-current-row
             size="small"
@@ -197,7 +202,13 @@ import Mock from "mockjs";
 import wadd from "./components/white/whiteAddDataDialog.vue";
 import wed from "./components/white/whiteEditDialog.vue";
 import export2Excel from "../../utils/exportfile.js";
-import { GetAll, Create, Update, Delete } from "../../api/whiteList";
+import {
+  GetAll,
+  Create,
+  Update,
+  Delete,
+  BatchDelete,
+} from "../../api/whiteList";
 export default {
   components: {
     wadd,
@@ -271,12 +282,33 @@ export default {
         this.$mess("您还没有选中要删除的数据");
         return false;
       } else {
-        let numId = [];
-        this.pickeList.forEach((item) => {
-          numId.push(item.num);
-        });
-        let data = this.tableData.filter((v) => !numId.includes(v.num));
-        this.tableData = data;
+        this.$confirm("此操作将删除数据, 是否继续?", "提示", {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning",
+        })
+          .then(() => {
+            let numId = [];
+            this.pickeList.forEach((item) => {
+              numId.push(item.id);
+            });
+            BatchDelete(numId)
+              .then((res) => {
+                console.log(res);
+                let data = this.tableData.filter((v) => !numId.includes(v.id));
+                this.tableData = data;
+                this.$mess({
+                  message: "删除成功",
+                  type: "success",
+                });
+              })
+              .catch((fail) => {
+                console.log(fail);
+              });
+          })
+          .catch(() => {
+            this.$mess("取消删除");
+          });
       }
     },
     handleReset(row) {
@@ -317,8 +349,13 @@ export default {
       if (data) {
         Create(data)
           .then((res) => {
-            console.log(res);
-            this.tableData.push(data);
+            if (res.data.success) {
+              this.getData();
+              this.$mess({
+                message: "添加成功",
+                type: "success",
+              });
+            }
           })
           .catch((fail) => {
             console.log(fail);
@@ -332,10 +369,11 @@ export default {
         console.log(data);
         Update(data)
           .then((res) => {
-            console.log(res, "--------");
-            this.tableData = this.tableData.map((item) =>
-              item.id === data.id ? data : item
-            );
+            if (res.data.success) {
+              this.tableData = this.tableData.map((item) =>
+                item.id === data.id ? data : item
+              );
+            }
           })
           .catch((fail) => {
             console.log(fail);

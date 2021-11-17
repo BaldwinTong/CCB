@@ -14,8 +14,8 @@
           ref="searchForm"
         >
           <div class="search-item">
-            <el-form-item label="所属类别：" prop="BelongType">
-              <el-select v-model="searchForm.BelongType" placeholder="请选择">
+            <el-form-item label="所属类别：" prop="Category">
+              <el-select v-model="searchForm.Category" placeholder="请选择">
                 <el-option
                   v-for="item in belongList"
                   :key="item.value"
@@ -132,13 +132,17 @@
             </el-table-column>
             <el-table-column prop="category" label="所属类别" align="center">
             </el-table-column>
-            <el-table-column prop="productName" label="产品名称" align="center" width="100px">
+            <el-table-column
+              prop="productName"
+              label="产品名称"
+              align="center"
+              width="100px"
+            >
             </el-table-column>
             <el-table-column
               prop="todayPrice"
               label="当日价格(元/斤)"
               align="center"
-              
             >
             </el-table-column>
             <el-table-column prop="priceDate" label="单价日期" align="center">
@@ -152,7 +156,12 @@
               width="100px"
             >
             </el-table-column>
-            <el-table-column prop="handle" label="处理" align="center" width="80px">
+            <el-table-column
+              prop="handle"
+              label="处理"
+              align="center"
+              width="80px"
+            >
               <template slot-scope="scope">
                 <div slot="reference" class="name-wrapper">
                   <el-tag
@@ -216,11 +225,18 @@
 import padd from "./components/proPrice/priceAddDialog.vue";
 import pedit from "./components/proPrice/priceEidtDialog.vue";
 import export2Excel from "../../utils/exportfile.js";
+import {
+  GetAll,
+  // Create,
+  // Update,
+  Delete,
+  BatchDelete,
+} from "../../api/productPrice.js";
 export default {
   data() {
     return {
       searchForm: {
-        BelongType: "",
+        Category: "",
         productName: "",
         date1: "",
         date2: "",
@@ -245,18 +261,8 @@ export default {
           label: "家禽类",
         },
       ],
-      tableData: [
-        {
-          num: "0001",
-          category: "蔬菜类",
-          productName: "小白菜",
-          todayPrice: "1.40",
-          priceDate: "2021-06-20",
-          getInDate: "2021-06-22",
-          getInPersonal: "王大锤",
-          tag: false,
-        },
-      ],
+      tableData: [],
+      classify: [], //分类列表
       // 点击事件
       showAddDataDialog: false,
       isshowEditvisible: false,
@@ -267,9 +273,26 @@ export default {
     };
   },
   components: { padd, pedit },
-  created() {},
+  created() {
+    this.getData(this.searchForm);
+  },
   methods: {
-    search() {},
+    search() {
+      this.getData(this.searchForm);
+    },
+    getData(data) {
+      GetAll(data)
+        .then((res) => {
+          res.data.result.items.forEach((item) => {
+            item.priceDate = item.priceDate.split("T")[0];
+            item.getInDate = item.getInDate.split("T")[0];
+          });
+          this.tableData = res.data.result.items;
+        })
+        .catch((fail) => {
+          console.log(fail);
+        });
+    },
     clearForm(formName) {
       this.$refs[formName].resetFields();
     },
@@ -287,11 +310,20 @@ export default {
         type: "warning",
       })
         .then(() => {
-          this.tableData = this.tableData.filter((v) => v.num != row.num);
-          this.$mess({
-            message: "删除成功",
-            type: "success",
-          });
+          Delete({ id: row.id })
+            .then((res) => {
+              console.log(res);
+              if (res.status == 200) {
+                this.$mess({
+                  message: "删除成功",
+                  type: "success",
+                });
+                this.getData(this.searchForm);
+              }
+            })
+            .catch((fail) => {
+              console.log(fail);
+            });
         })
         .catch(() => {
           this.$mess("取消删除");
@@ -317,10 +349,18 @@ export default {
           .then(() => {
             let numId = [];
             this.pickeList.forEach((item) => {
-              numId.push(item.num);
+              numId.push(item.id);
             });
-            let data = this.tableData.filter((v) => !numId.includes(v.num));
-            this.tableData = data;
+            BatchDelete(numId)
+              .then((res) => {
+                console.log(res);
+                if (res.status == 200) {
+                  this.getData(this.searchForm);
+                }
+              })
+              .catch((fail) => {
+                console.log(fail);
+              });
           })
           .catch(() => {
             this.$mess("取消删除");
@@ -375,8 +415,8 @@ export default {
           console.log("导出失败");
         });
     },
-    // 导入
 
+    // 导入
     handleChange(file) {
       this.fileTemp = file.raw;
       if (this.fileTemp) {

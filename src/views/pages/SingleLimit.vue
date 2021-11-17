@@ -24,33 +24,72 @@
         </div>
       </el-form>
       <div class="btns">
-        <el-button v-if="isDisabled" type="primary" class="edit-btn" size="mini" @click="change">修改</el-button>
-        <el-button v-else type="primary" class="edit-btn" size="mini" @click="onConfirmChange">确认修改</el-button>
+        <el-button
+          v-if="isDisabled"
+          type="primary"
+          class="edit-btn"
+          size="mini"
+          @click="change"
+          >修改</el-button
+        >
+        <el-button
+          v-else
+          type="primary"
+          class="edit-btn"
+          size="mini"
+          @click="onConfirmChange"
+          >确认修改</el-button
+        >
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import { GetSingleLimit, EditSingleLimit } from "../../api/pricelimit"; 
 export default {
   data() {
     return {
       form: {
-        singleLimit: "20000",
-        bankNumber: "666XXXXXXXXXXXXXX0467",
+        singleLimit: "",
+        bankNumber: "",
       },
       isDisabled: true,
     };
   },
   components: {},
-  created() {},
+  created() {
+    this.getData();
+  },
   methods: {
-    change(){
-      this.isDisabled = false
+    getData() {
+      GetSingleLimit()
+        .then((res) => {
+          console.log(res);
+          this.form = res.data.result
+        })
+        .catch((fail) => {
+          console.log(fail);
+        });
     },
-    onConfirmChange(){
-      this.isDisabled = true
-    }
+    change() {
+      this.isDisabled = false;
+    },
+    onConfirmChange() {
+      EditSingleLimit(this.form)
+        .then((res) => {
+          if (res.data.success) {
+            this.$mess({
+              type:'success',
+              message:'修改成功！'
+            })
+          }
+        })
+        .catch((fail) => {
+          console.log(fail);
+        });
+      this.isDisabled = true;
+    },
   },
   computed: {},
 };
@@ -81,7 +120,7 @@ export default {
   top: 0px;
   right: -70px;
 }
-.btns{
+.btns {
   width: 28%;
   display: flex;
   justify-content: center;

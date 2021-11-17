@@ -1,6 +1,4 @@
-import Mock from 'mockjs';
-import bill from "./bill.js"
+// import Mock from 'mockjs';
+// import bill from "./bill.js"
 
-Mock.mock('/detailData', 'get', bill())
-
-
+// Mock.mock('/detailData', 'get', bill())

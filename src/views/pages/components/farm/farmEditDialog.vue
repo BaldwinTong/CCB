@@ -10,7 +10,7 @@
           ref="dialogForm"
         >
           <el-form-item label="所属类别：" prop="category">
-            <el-select v-model="dialogForm.category">
+            <el-select v-model="dialogForm.category" @change="changeCategory">
               <el-option
                 v-for="item in CategoryList"
                 :key="item.value"
@@ -45,6 +45,7 @@
 </template>
 
 <script>
+import { CategoryGetAll } from "../../../../api/FarmProductCategory.js";
 export default {
   components: {},
   props: {
@@ -84,24 +85,32 @@ export default {
           { required: true, message: "请输入年成交量", trigger: "blur" },
         ],
       },
-      CategoryList: [
-        {
-          label: "蔬菜类",
-          value: "蔬菜类",
-        },
-        {
-          label: "瓜果类",
-          value: "瓜果类",
-        },
-      ],
+      CategoryList: [],
       list: [],
     };
   },
   created() {
     this.dialogVisible = this.isshow;
-    this.dialogForm = this.editData;
+    this.dialogForm = JSON.parse(JSON.stringify(this.editData));
+    this.getCategoryList();
   },
   methods: {
+    changeCategory(e) {
+      this.CategoryList.forEach((item) => {
+        if (e == item.name) {
+          this.dialogForm.farmProductCategoryId = item.id;
+        }
+      });
+    },
+    getCategoryList() {
+      CategoryGetAll()
+        .then((res) => {
+          this.CategoryList = res.data.result.items;
+        })
+        .catch((fail) => {
+          console.log(fail);
+        });
+    },
     onConfirm(formName) {
       this.$refs[formName].validate((valid) => {
         if (valid) {

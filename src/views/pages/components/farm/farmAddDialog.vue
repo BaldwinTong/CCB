@@ -10,12 +10,12 @@
           ref="dialogForm"
         >
           <el-form-item label="所属类别：" prop="category">
-            <el-select v-model="dialogForm.category">
+            <el-select v-model="dialogForm.category" @change="changeCategory">
               <el-option
                 v-for="item in CategoryList"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
+                :key="item.id"
+                :label="item.name"
+                :value="item.name"
               >
               </el-option>
             </el-select>
@@ -36,13 +36,16 @@
       </div>
       <span slot="footer" class="dialog-footer">
         <el-button @click="dialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="onConfirm('dialogForm')">确 定</el-button>
+        <el-button type="primary" @click="onConfirm('dialogForm')"
+          >确 定</el-button
+        >
       </span>
     </el-dialog>
   </div>
 </template>
 
 <script>
+import { CategoryGetAll } from "../../../../api/FarmProductCategory.js";
 export default {
   props: {
     isshow: {
@@ -56,6 +59,7 @@ export default {
       dialogForm: {
         category: "",
         productName: "",
+        farmProductCategoryId: "",
         bottomPrice: "",
         highestPrice: "",
         yearValue: "",
@@ -78,26 +82,37 @@ export default {
         ],
       },
 
-      CategoryList: [
-        {
-          label: "蔬菜类",
-          value: "蔬菜类",
-        },
-        {
-          label: "瓜果类",
-          value: "瓜果类",
-        },
-      ],
+      CategoryList: [],
     };
   },
   created() {
     this.dialogVisible = this.isshow;
+    this.getCategoryList();
   },
   methods: {
+    changeCategory(e) {
+      this.CategoryList.forEach((item) => {
+        if (e == item.name) {
+          this.dialogForm.farmProductCategoryId = item.id;
+        }
+      });
+    },
+    getCategoryList() {
+      CategoryGetAll()
+        .then((res) => {
+          this.CategoryList = res.data.result.items;
+        })
+        .catch((fail) => {
+          console.log(fail);
+        });
+    },
     onConfirm(formName) {
       this.$refs[formName].validate((valid) => {
         if (valid) {
-          this.$emit("addcloseDialog",false, this.dialogForm)
+          this.dialogForm.bottomPrice = Number(this.dialogForm.bottomPrice);
+          this.dialogForm.highestPrice = Number(this.dialogForm.highestPrice);
+          this.dialogForm.yearValue = Number(this.dialogForm.yearValue);
+          this.$emit("addcloseDialog", false, this.dialogForm);
         } else {
           console.log("error submit!!");
           return false;
