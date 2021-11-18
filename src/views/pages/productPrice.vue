@@ -18,9 +18,9 @@
               <el-select v-model="searchForm.Category" placeholder="请选择">
                 <el-option
                   v-for="item in belongList"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value"
+                  :key="item.id"
+                  :label="item.name"
+                  :value="item.name"
                 >
                 </el-option>
               </el-select>
@@ -168,7 +168,7 @@
                     size="medium"
                     effect="plain"
                     type=""
-                    v-if="scope.row.tag"
+                    v-if="scope.row.handle == 'true'"
                   >
                     启用</el-tag
                   >
@@ -227,11 +227,12 @@ import pedit from "./components/proPrice/priceEidtDialog.vue";
 import export2Excel from "../../utils/exportfile.js";
 import {
   GetAll,
-  // Create,
-  // Update,
+  Create,
+  Update,
   Delete,
   BatchDelete,
 } from "../../api/productPrice.js";
+import { CategoryGetAll } from "../../api/FarmProductCategory.js";
 export default {
   data() {
     return {
@@ -243,24 +244,7 @@ export default {
         todayPrice: "",
         getInUserName: "",
       },
-      belongList: [
-        {
-          value: "蔬菜类",
-          label: "蔬菜类",
-        },
-        {
-          value: "瓜果类",
-          label: "瓜果类",
-        },
-        {
-          value: "海鲜类",
-          label: "海鲜类",
-        },
-        {
-          value: "家禽类",
-          label: "家禽类",
-        },
-      ],
+      belongList: [],
       tableData: [],
       classify: [], //分类列表
       // 点击事件
@@ -274,10 +258,21 @@ export default {
   },
   components: { padd, pedit },
   created() {
+    this.getClassify();
     this.getData(this.searchForm);
   },
   methods: {
+    getClassify() {
+      CategoryGetAll()
+        .then((res) => {
+          this.belongList = res.data.result.items;
+        })
+        .catch((fail) => {
+          console.log(fail);
+        });
+    },
     search() {
+      console.log(this.searchForm);
       this.getData(this.searchForm);
     },
     getData(data) {
@@ -312,7 +307,7 @@ export default {
         .then(() => {
           Delete({ id: row.id })
             .then((res) => {
-              console.log(res);
+              console.log(row);
               if (res.status == 200) {
                 this.$mess({
                   message: "删除成功",
@@ -370,15 +365,42 @@ export default {
     addCloseDialog(e, data) {
       this.showAddDataDialog = e;
       if (data) {
+        console.log(data);
         data.num = "000" + (this.tableData.length + 1);
         this.tableData.push(data);
+        Create(data)
+          .then((res) => {
+            if (res.status == 200) {
+              this.$mess({
+                message: "添加成功",
+                type: "success",
+              });
+              this.getData(this.searchForm);
+            }
+          })
+          .catch((fail) => {
+            console.log(fail);
+          });
       }
     },
 
     editcloseDialog(e, data) {
-      console.log(e, "-----");
       this.isshowEditvisible = e;
-      console.log(data);
+      if (data) {
+        Update(data)
+          .then((res) => {
+            if (res.status == 200) {
+              this.$mess({
+                message: "修改成功",
+                type: "success",
+              });
+              this.getData(this.searchForm);
+            }
+          })
+          .catch((fail) => {
+            console.log(fail);
+          });
+      }
     },
 
     // 导出

@@ -198,10 +198,10 @@
 </template>
 
 <script>
-import Mock from "mockjs";
 import wadd from "./components/white/whiteAddDataDialog.vue";
 import wed from "./components/white/whiteEditDialog.vue";
 import export2Excel from "../../utils/exportfile.js";
+import { generateMixed } from "../../utils/utils";
 import {
   GetAll,
   Create,
@@ -345,7 +345,8 @@ export default {
 
     addCloseDialog(e, data) {
       this.showAddDataDialog = e;
-      data.num = Mock.mock("@id()");
+      data.num = generateMixed(6);
+      console.log(data.num);
       if (data) {
         Create(data)
           .then((res) => {

@@ -10,12 +10,12 @@
           ref="dialogForm"
         >
           <el-form-item label="所属类别：" prop="category">
-            <el-select v-model="dialogForm.category">
+            <el-select v-model="dialogForm.category" @change="changeCategory">
               <el-option
                 v-for="item in CategoryList"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
+                :key="item.id"
+                :label="item.name"
+                :value="item.name"
               >
               </el-option>
             </el-select>
@@ -49,7 +49,7 @@
           </el-form-item>
           <el-form-item label="处理：">
             <el-switch
-              v-model="dialogForm.tag"
+              v-model="dialogForm.handle"
               active-text="启用"
               inactive-text="禁用"
               @change="changeTag"
@@ -69,6 +69,7 @@
 </template>
 
 <script>
+import { CategoryGetAll } from "../../../../api/FarmProductCategory.js";
 export default {
   props: {
     isshowDialog: {
@@ -80,13 +81,14 @@ export default {
     return {
       dialogVisible: false,
       dialogForm: {
+        farmProductId:"",
         category: "",
         productName: "",
         todayPrice: "",
         priceDate:"",
         getInDate: "",
         getInPersonal: "",
-        tag: true,
+        handle: true,
       },
       dialogRule: {
         category: [
@@ -109,22 +111,30 @@ export default {
         ],
       },
 
-      CategoryList: [
-        {
-          label: "蔬菜类",
-          value: "蔬菜类",
-        },
-        {
-          label: "瓜果类",
-          value: "瓜果类",
-        },
-      ],
+      CategoryList: [],
     };
   },
   created() {
     this.dialogVisible = this.isshowDialog;
+    this.getCategoryList();
   },
   methods: {
+     changeCategory(e) {
+      this.CategoryList.forEach((item) => {
+        if (e == item.name) {
+          this.dialogForm.farmProductCategoryId = item.id;
+        }
+      });
+    },
+    getCategoryList() {
+      CategoryGetAll()
+        .then((res) => {
+          this.CategoryList = res.data.result.items;
+        })
+        .catch((fail) => {
+          console.log(fail);
+        });
+    },
     onConfirm(formName) {
       this.$refs[formName].validate((valid) => {
         if (valid) {
@@ -136,7 +146,7 @@ export default {
       });
     },
     changeTag(e) {
-      this.dialogForm.tag = e;
+      this.dialogForm.handle = e;
     },
   },
   computed: {},

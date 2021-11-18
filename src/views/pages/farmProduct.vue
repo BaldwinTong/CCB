@@ -322,6 +322,10 @@ export default {
         Create(data)
           .then((res) => {
             if (res.status == 200) {
+              this.$mess({
+                message: "添加成功",
+                type: "success",
+              });
               this.getData(this.searchForm);
             }
           })

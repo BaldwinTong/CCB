@@ -4,7 +4,7 @@ export function GetAll(data) {
     return service({
         url: '/services/app/FarmProductPrice/GetAll',
         method: 'get',
-        data
+        params: data
     })
 }
 export function Create(data) {
@@ -25,7 +25,7 @@ export function Delete(data) {
     return service({
         url: '/services/app/FarmProductPrice/delete',
         method: 'delete',
-        data
+        params: data
     })
 }
 export function BatchDelete(data) {

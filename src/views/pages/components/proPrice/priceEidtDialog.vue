@@ -37,7 +37,7 @@
           </el-form-item>
           <el-form-item label="处理：" prop="getInPersonal">
             <el-switch
-              v-model="dialogForm.tag"
+              v-model="dialogForm.handle"
               active-text="启用"
               inactive-text="禁用"
               @change="changeTag"
@@ -79,7 +79,7 @@ export default {
         priceDate: "",
         getInDate: "",
         getInPersonal: "",
-        tag: false,
+        handle: "",
       },
       dialogRule: {
         category: [
@@ -114,7 +114,6 @@ export default {
   created() {
     this.dialogVisible = this.isshowDialog;
     this.dialogForm = this.editData;
-    console.log(this.isshowDialog);
   },
   methods: {
     onConfirm(formName) {
@@ -128,13 +127,12 @@ export default {
       });
     },
     changeTag(e) {
-      this.dialogForm.tag = e;
+      this.dialogForm.handle = e;
     },
   },
   computed: {},
   watch: {
     dialogVisible() {
-      console.log(this.dialogVisible);
       if (!this.dialogVisible) {
         this.$emit("editcloseDialog", false);
       }

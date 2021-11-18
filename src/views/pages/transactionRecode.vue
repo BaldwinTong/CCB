@@ -81,16 +81,16 @@
               <div class="date">{{ items.date }}</div>
             </div>
             <div class="top-right">
-              <div class="top-btn staycheckPending" v-if="items.type == 1">
+              <div class="top-btn staycheckPending" v-if="items.type == '待审核'">
                 待审核
               </div>
-              <div class="top-btn alreadyPending" v-if="items.type == 2">
+              <div class="top-btn alreadyPending" v-if="items.type == '已审核'">
                 已审核
               </div>
-              <div class="top-btn noNeedPending" v-if="items.type == 3">
+              <div class="top-btn noNeedPending" v-if="items.type == '无需审核'">
                 无需审核
               </div>
-              <div class="top-btn checkPending" v-if="items.type == 4">
+              <div class="top-btn checkPending" v-if="items.type == '审核中'">
                 审核中
               </div>
             </div>
@@ -120,14 +120,14 @@
               <div class="line"></div>
               <div class="info-title">是否需要审核：</div>
               <div class="info-quantity">
-                {{ items.type == 3 ? "否" : "是" }}
+                {{ items.type }}
               </div>
             </div>
             <div class="info-item">
               <div class="line"></div>
               <div class="info-title">审核人员：</div>
               <div class="info-quantity">
-                {{ items.type == 3 ? "无" : items.checkUser }}
+                {{ items.type == "无需审核" ? "无" : items.checkUser }}
               </div>
             </div>
           </div>
@@ -138,25 +138,30 @@
 </template>
 
 <script>
+import { GetAll } from "../../api/transactionRecode";
 export default {
   data() {
     return {
       type1: 1,
       type2: 1,
       dataList: [],
+      searchData:{
+        Type:"",
+        StartTime:"",
+        EndTime:"",
+      }
     };
   },
   components: {},
   created() {
-    this.getData();
+    this.getData({});
   },
   methods: {
-    getData() {
-      this.$http
-        .get("/detailData")
+    getData(data) {
+      GetAll(data)
         .then((res) => {
           console.log(res);
-          this.dataList = res.data;
+          this.dataList = res.data.result.items
         })
         .catch((fail) => {
           console.log(fail);
@@ -164,7 +169,7 @@ export default {
     },
     changeAudit(e) {
       this.type1 = e;
-      this.sifting(this.type1);
+      this.searchData.Type = e
     },
     changeDate(e) {
       this.type2 = e;
@@ -220,7 +225,7 @@ export default {
 .T-box {
   margin-top: 20px;
   width: 100%;
-  height: 70vh;
+  /* height: 70vh; */
   overflow: auto;
 }
 

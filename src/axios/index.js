@@ -27,25 +27,33 @@ service.interceptors.response.use(
         return res
     },
     err => {
-        switch (err.response.status) {
-            case 401:
-                ElementUI.MessageBox.confirm('登录失效, 请重新登录！', '提示', {
-                    confirmButtonText: '确定',
-                    showCancelButton: false,
-                    type: 'warning'
-                }).then(() => {
-                    localStorage.removeItem('TOKEN');
-                    router.replace('/login');
-                })
-                break;
-            case 403:
-                ElementUI.Message({
-                    type: 'danger',
-                    message: '没有权限'
-                });
-                break;
-            default:
-                break;
+        console.log(err);
+        if (err.response) {
+            switch (err.response.status) {
+                case 401:
+                    ElementUI.MessageBox.confirm('登录失效, 请重新登录！', '提示', {
+                        confirmButtonText: '确定',
+                        showCancelButton: false,
+                        type: 'warning'
+                    }).then(() => {
+                        localStorage.removeItem('TOKEN');
+                        router.replace('/login');
+                    })
+                    break;
+                case 403:
+                    ElementUI.Message({
+                        type: 'error',
+                        message: '没有权限'
+                    });
+                    break;
+                default:
+                    break;
+            }
+        } else {
+            ElementUI.Message({
+                type: 'error',
+                message: '网络连接失败，请刷新再试一次！'
+            });
         }
         return Promise.reject(err)
     }
