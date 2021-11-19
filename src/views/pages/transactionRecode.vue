@@ -68,7 +68,7 @@
           :class="type2 == 5 ? 'typeActive' : 'status-item'"
           @click="changeDate(5)"
         >
-          6个月以上
+          自定义查询
         </div>
       </div>
     </div>
@@ -81,13 +81,19 @@
               <div class="date">{{ items.date }}</div>
             </div>
             <div class="top-right">
-              <div class="top-btn staycheckPending" v-if="items.type == '待审核'">
+              <div
+                class="top-btn staycheckPending"
+                v-if="items.type == '待审核'"
+              >
                 待审核
               </div>
               <div class="top-btn alreadyPending" v-if="items.type == '已审核'">
                 已审核
               </div>
-              <div class="top-btn noNeedPending" v-if="items.type == '无需审核'">
+              <div
+                class="top-btn noNeedPending"
+                v-if="items.type == '无需审核'"
+              >
                 无需审核
               </div>
               <div class="top-btn checkPending" v-if="items.type == '审核中'">
@@ -134,22 +140,51 @@
         </div>
       </div>
     </div>
+
+    <el-dialog title="提示" :visible.sync="dialogVisible" width="30%">
+      <el-form :model="searchData">
+        <el-form-item label="开始时间">
+          <el-date-picker
+            v-model="searchData.StartTime"
+            value-format="yyyy-MM-dd"
+            type="date"
+            placeholder="选择日期"
+          >
+          </el-date-picker>
+        </el-form-item>
+        <el-form-item label="结束时间">
+          <el-date-picker
+            v-model="searchData.EndTime"
+            value-format="yyyy-MM-dd"
+            type="date"
+            placeholder="选择日期"
+          >
+          </el-date-picker>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="dialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="onConfirm">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import { GetAll } from "../../api/transactionRecode";
+import { choiceDate } from "../../utils/utils";
 export default {
   data() {
     return {
       type1: 1,
       type2: 1,
       dataList: [],
-      searchData:{
-        Type:"",
-        StartTime:"",
-        EndTime:"",
-      }
+      dialogVisible: false,
+      searchData: {
+        Type: "",
+        StartTime: "",
+        EndTime: "",
+      },
     };
   },
   components: {},
@@ -160,8 +195,15 @@ export default {
     getData(data) {
       GetAll(data)
         .then((res) => {
-          console.log(res);
-          this.dataList = res.data.result.items
+          res.data.result.items.forEach((item) => {
+            item.date =
+              item.creationTime.split("T")[0] +
+              " " +
+              item.creationTime.split("T")[1].split(":")[0] +
+              ":" +
+              item.creationTime.split("T")[1].split(":")[1];
+          });
+          this.dataList = res.data.result.items;
         })
         .catch((fail) => {
           console.log(fail);
@@ -169,10 +211,41 @@ export default {
     },
     changeAudit(e) {
       this.type1 = e;
-      this.searchData.Type = e
+      switch (e) {
+        case 1:
+          this.searchData.Type = "";
+          break;
+        case 2:
+          this.searchData.Type = "待审核";
+          break;
+        case 3:
+          this.searchData.Type = "审核中";
+          break;
+        case 4:
+          this.searchData.Type = "已审核";
+          break;
+        case 5:
+          this.searchData.Type = "无需审核";
+          break;
+        default:
+          break;
+      }
+      this.getData(this.searchData);
     },
     changeDate(e) {
       this.type2 = e;
+      if (e < 5) {
+        let date = choiceDate(e);
+        this.searchData.StartTime = date[0];
+        this.searchData.EndTime = date[1];
+        this.getData(this.searchData);
+      } else {
+        this.dialogVisible = true;
+      }
+    },
+    onConfirm() {
+      this.getData(this.searchData);
+      this.dialogVisible = false;
     },
   },
   computed: {},
@@ -225,7 +298,7 @@ export default {
 .T-box {
   margin-top: 20px;
   width: 100%;
-  /* height: 70vh; */
+  max-height: 70vh;
   overflow: auto;
 }
 

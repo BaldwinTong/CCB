@@ -117,6 +117,7 @@ export default {
             });
         } else {
           alert("登录失败");
+          this.loading = false;
         }
       });
     },
