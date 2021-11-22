@@ -2,7 +2,7 @@
   <div class="container">
     <div class="header-img">
       <img src="../assets/head.png" alt="" />
-      <div class="title">管理员，下午好</div>
+      <div class="title">{{userName}}，{{hour>12?"下午好":"早上好"}}</div>
     </div>
     <div class="navlist">
       <div
@@ -21,7 +21,9 @@
 export default {
   data() {
     return {
+      hour:0,
       pickItem: 1,
+      userName:"",
       navList: [
         {
           title: "白名单",
@@ -65,11 +67,20 @@ export default {
        this.pickItem = item.navIndex
       }
     })
+    this.gettime()
+    this.userName = JSON.parse(localStorage.getItem("USER_INFO")).name
   },
   methods: {
     changeNav(e, path) {
       this.pickItem = e;
       this.$router.push(path);
+    },
+
+    gettime(){
+      let nowDate = new Date();
+      let hour = nowDate.getHours();
+      this.hour = hour;
+      console.log(this.hour);
     },
   },
   computed: {},

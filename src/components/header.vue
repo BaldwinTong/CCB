@@ -19,7 +19,10 @@ export default {
   created() {},
   methods: {
     loginOut(){
-      this.$router.push('/login')
+      localStorage.removeItem("TOKEN");
+      localStorage.removeItem("USER_INFO");
+      this.$router.push('/login');
+
     }
   },
   computed: {},

@@ -1,28 +1,43 @@
 <template>
-    <el-container class="home-aside">
-      <el-aside width="200px">
-        <nav-aside></nav-aside>
-      </el-aside>
-      <el-container>
-        <el-header>
-          <sellheader></sellheader>
-        </el-header>
-        <el-main>
-          <router-view />
-        </el-main>
-      </el-container>
+  <el-container class="home-aside">
+    <el-aside width="200px">
+      <nav-aside></nav-aside>
+    </el-aside>
+    <el-container>
+      <el-header>
+        <sellheader></sellheader>
+      </el-header>
+      <el-main>
+        <router-view />
+      </el-main>
     </el-container>
+  </el-container>
 </template>
 
 <script>
 import navAside from "../components/navAside.vue";
 import sellheader from "../components/header.vue";
+import { GetUserInfo } from "../api/userInfo";
 export default {
   name: "Home",
   data() {
     return {};
   },
   components: { navAside, sellheader },
+  mounted() {
+    this.getUserInfo();
+  },
+  methods: {
+    getUserInfo() {
+      GetUserInfo({})
+        .then((res) => {
+          localStorage.setItem("USER_INFO", JSON.stringify(res.data.result.items[0]));
+        })
+        .catch((fail) => {
+          console.log(fail);
+        });
+    },
+  },
 };
 </script>
 <style scoped>
@@ -55,9 +70,7 @@ body > .el-container {
   margin-bottom: 40px;
 }
 .el-breadcrumb__inner {
-  color: #94949A;
+  color: #94949a;
   font-size: 12px;
 }
-
-
 </style>
