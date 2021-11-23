@@ -1,16 +1,17 @@
 const userInfo = {
     namespaced: true, // 创建命名空间
     state: { // 存储变量
-        userInfo: {}
+        userInfo: JSON.parse(sessionStorage.getItem(`userInfo`)) || {}
     },
     mutations: { // 定义修改state方法
         setUserInfo(state, obj) {
-            state.userInfo = obj
+            sessionStorage.setItem(`userInfo`, JSON.stringify(obj))
+            state.userInfo = obj;
         }
     },
     actions: { // 异步调用mutations
-        actionsUserInfo: ({ commit }, obj) => {
-            commit("setUserInfo", obj)
+        UpdateUserInfo(context, obj) {
+            context.commit("setUserInfo", obj)
         }
     },
 

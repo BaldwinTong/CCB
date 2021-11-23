@@ -8,7 +8,6 @@ export function GetAll(data) {
     })
 }
 export function Create(data) {
-    console.log(data);
     return service({
         url: '/services/app/Whitelist/Create',
         method: 'post',

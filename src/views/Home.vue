@@ -31,7 +31,7 @@ export default {
     getUserInfo() {
       GetUserInfo({})
         .then((res) => {
-          localStorage.setItem("USER_INFO", JSON.stringify(res.data.result.items[0]));
+          this.$store.dispatch('userInfo/UpdateUserInfo',res.data.result.items[0])
         })
         .catch((fail) => {
           console.log(fail);

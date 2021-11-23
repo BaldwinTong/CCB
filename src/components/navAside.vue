@@ -2,7 +2,9 @@
   <div class="container">
     <div class="header-img">
       <img src="../assets/head.png" alt="" />
-      <div class="title">{{userName}}，{{hour>12?"下午好":"早上好"}}</div>
+      <div class="title">
+        {{ userName }}，{{ hour > 12 ? "下午好" : "早上好" }}
+      </div>
     </div>
     <div class="navlist">
       <div
@@ -21,9 +23,9 @@
 export default {
   data() {
     return {
-      hour:0,
+      hour: 0,
       pickItem: 1,
-      userName:"",
+      userName: "",
       navList: [
         {
           title: "白名单",
@@ -59,16 +61,20 @@ export default {
     };
   },
   components: {},
-  beforeCreate(){
-  },
+  beforeCreate() {},
   created() {
-    this.navList.forEach(item=>{
+    this.navList.forEach((item) => {
       if (item.path == this.$route.path) {
-       this.pickItem = item.navIndex
+        this.pickItem = item.navIndex;
       }
-    })
-    this.gettime()
-    this.userName = JSON.parse(localStorage.getItem("USER_INFO")).name
+    });
+    this.userName = this.$store.state.userInfo.userInfo.name
+    this.getTime();
+  },
+  watch: {
+    '$store.state.userInfo.userInfo.name'(newVal) {
+      this.userName = newVal
+    },
   },
   methods: {
     changeNav(e, path) {
@@ -76,14 +82,13 @@ export default {
       this.$router.push(path);
     },
 
-    gettime(){
+    getTime() {
       let nowDate = new Date();
       let hour = nowDate.getHours();
       this.hour = hour;
       console.log(this.hour);
     },
   },
-  computed: {},
 };
 </script>
 

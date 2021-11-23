@@ -11,7 +11,9 @@
           :model="infoForm"
           ref="infoForm"
           label-width="180px"
+          :rules="infoFormRules"
           :inline="true"
+          :hide-required-asterisk="isDisabled"
         >
           <el-form-item label="姓名：" prop="name">
             <el-input v-model="infoForm.name" :disabled="isDisabled"></el-input>
@@ -73,7 +75,7 @@
             type="primary"
             size="mini"
             class="btn"
-            @click="confirm"
+            @click="confirm('infoForm')"
             >确认修改</el-button
           >
           <el-button
@@ -90,7 +92,7 @@
 </template>
 
 <script>
-import { GetUserInfo } from "../../api/userInfo";
+import { GetUserInfo, UpdateUserInfo } from "../../api/userInfo";
 import Region from "../../Region/index";
 export default {
   data() {
@@ -101,13 +103,28 @@ export default {
         gender: "",
         idCardNum: "",
         address: "",
-        detailAddress: "",
         bankName: "",
         bankNumber: "",
         provinceCode: "",
         cityCode: "",
         areaCode: "",
         areaRegion: [],
+      },
+      infoFormRules: {
+        name: [{ required: true, message: "请输入用户名", trigger: "blur" }],
+        gender: [{ required: true, message: "请输入性别", trigger: "blur" }],
+        idCardNum: [
+          { required: true, message: "请输入身份证号码", trigger: "blur" },
+        ],
+        address: [
+          { required: true, message: "请输入详细地址", trigger: "blur" },
+        ],
+        bankName: [
+          { required: true, message: "请输入银行名称", trigger: "blur" },
+        ],
+        bankNumber: [
+          { required: true, message: "请输入银行卡号", trigger: "blur" },
+        ],
       },
       props: {
         value: "code",
@@ -120,14 +137,12 @@ export default {
   created() {
     this.getData();
     this.addressList = Region.Region;
-    console.log(typeof(this.addressList));
-
   },
   methods: {
     getData() {
       GetUserInfo({})
         .then((res) => {
-          console.log(res.data.result.items[0]);
+          this.infoForm = res.data.result.items[0];
           /*
           provinceCode:省级编号
           cityCode：市级编号
@@ -138,27 +153,23 @@ export default {
             cityCode: res.data.result.items[0].cityCode,
             areaCode: res.data.result.items[0].areaCode,
           };
-          let addres = "";
+          let addres = [];
           this.addressList.forEach((pro_item) => {
-            // console.log(pro_item);
             if (pro_item.code == obj.provinceCode) {
-              addres = pro_item.name;
-              // this.infoForm.areaRegion
+              addres.push(pro_item.code);
               pro_item.children.forEach((city_item) => {
                 if (city_item.code == obj.cityCode) {
-                  addres += city_item.name;
+                  addres.push(city_item.code);
                   city_item.children.forEach((area_item) => {
                     if (area_item.code == obj.areaCode) {
-                      addres += area_item.name;
+                      addres.push(area_item.code);
                     }
                   });
                 }
               });
             }
           });
-          this.infoForm.areaRegion = addres
-          console.log(this.infoForm.areaRegion);
-          this.infoForm = res.data.result.items[0];
+          this.infoForm.areaRegion = addres;
         })
         .catch((fail) => {
           console.log(fail);
@@ -166,16 +177,46 @@ export default {
     },
     handleChange(value) {
       console.log(value);
+      if (value) {
+        this.infoForm.address = "";
+      }
     },
     edit() {
       this.isDisabled = false;
     },
-    confirm() {
-      this.isDisabled = true;
+    confirm(formName) {
+      this.$refs[formName].validate((valid) => {
+        if (valid) {
+          UpdateUserInfo(this.infoForm)
+            .then((res) => {
+              if (res.data.success) {
+                this.isDisabled = true;
+                 this.$store.dispatch('userInfo/UpdateUserInfo',this.infoForm)
+                this.$mess({
+                  type: "success",
+                  message: "修改成功!",
+                });
+              }
+            })
+            .catch((fail) => {
+              console.log(fail);
+            });
+        } else {
+          console.log("error submit!!");
+          return false;
+        }
+      });
     },
     resetForm(formName) {
-      console.log(123);
-      this.$refs[formName].resetFields();
+      if (!this.isDisabled) {
+        this.$refs[formName].resetFields();
+        console.log(this.infoForm);
+      } else {
+        this.$mess({
+          type: "warning",
+          message: "请点击修改后再重置!",
+        });
+      }
     },
   },
   computed: {},
